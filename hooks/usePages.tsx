@@ -42,7 +42,7 @@ export function PagesProvider ({ children }: { children: ReactNode }) {
   const [user] = useUser();
 
   const { data } = useSWR(() => space ? `pages/${space?.id}` : null, () => charmClient.getPages(space!.id));
-
+  console.log('space', space);
   useEffect(() => {
     if (space) {
       setPages({});
@@ -54,6 +54,9 @@ export function PagesProvider ({ children }: { children: ReactNode }) {
           }
           setPages(state);
         });
+    }
+    else {
+      setPages({});
     }
   }, [space?.id]);
 

@@ -114,16 +114,16 @@ export default function RouteGuard ({ children }: { children: ReactNode }) {
       return { authorized: false, user: _user };
     }
     // condition: trying to access a space without access
-    else if (isSpaceDomain(spaceDomain) && !spaces.some(s => s.domain === spaceDomain)) {
-      console.log('[RouteGuard]: send to join workspace page');
-      return {
-        authorized: false,
-        redirect: {
-          pathname: '/join',
-          query: { domain: spaceDomain, returnUrl: router.asPath }
-        }
-      };
-    }
+    // else if (isSpaceDomain(spaceDomain) && !spaces.some(s => s.domain === spaceDomain)) {
+    //   console.log('[RouteGuard]: send to join workspace page');
+    //   return {
+    //     authorized: false,
+    //     redirect: {
+    //       pathname: '/join',
+    //       query: { domain: spaceDomain, returnUrl: router.asPath }
+    //     }
+    //   };
+    // }
     else {
       return { authorized: true };
     }

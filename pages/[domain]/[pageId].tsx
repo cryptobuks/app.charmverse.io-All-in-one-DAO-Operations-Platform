@@ -81,12 +81,19 @@ export default function BlocksEditorPage ({ publicShare = false }: IBlocksEditor
       }
       else {
         setPageNotFound(true);
+        setTitleState('Page Not Found');
       }
     }
-  }, [pageId, pagesLoaded]);
+    else {
+      setTitleState('');
+    }
+  }, [pageId, pagesLoaded, space]);
 
   const currentPage = pages[currentPageId];
 
+  if (!space) {
+    return <ErrorPage message={'You don\'t have access to this space'} />;
+  }
   if (pageNotFound) {
     return <ErrorPage message={'Sorry, that page doesn\'t exist'} />;
   }
