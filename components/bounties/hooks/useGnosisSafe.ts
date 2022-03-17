@@ -17,8 +17,14 @@ export default function useSafe ({ chainId, safeAddress }: { chainId: number, sa
       ethers,
       signer
     });
-    const _safe = await Safe.create({ ethAdapter: ethAdapterOwner1, safeAddress });
-    return _safe;
+    try {
+      const _safe = await Safe.create({ ethAdapter: ethAdapterOwner1, safeAddress });
+      return _safe;
+    }
+    catch (error) {
+      alert('There was an error switching networks. Please try again once you are on the correct network');
+      return null;
+    }
   }
 
   useEffect(() => {
