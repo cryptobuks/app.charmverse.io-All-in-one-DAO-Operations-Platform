@@ -209,7 +209,7 @@ export default function BountyDetails () {
     <Container top={100}>
       <BountyModal onSubmit={saveBounty} mode='update' bounty={bounty} open={showBountyEditDialog} onClose={toggleBountyEditDialog} />
 
-      <Modal open={showApplicationDialog} onClose={toggleApplicationDialog}>
+      <Modal open={showApplicationDialog} onClose={toggleApplicationDialog} title='Apply to this bounty' size='large'>
         <ApplicationEditorForm
           bountyId={bounty.id}
           onSubmit={applicationSubmitted}
@@ -226,7 +226,6 @@ export default function BountyDetails () {
 
         <Box component='div' sx={{ columnSpacing: 2, mt: 3 }}>
           <Button color='error' sx={{ mr: 2, fontWeight: 'bold' }} onClick={deleteBounty}>Delete bounty</Button>
-
           {
             bounty.status === 'open' && <Button color='secondary' onClick={toggleBountyDeleteDialog}>Cancel</Button>
           }

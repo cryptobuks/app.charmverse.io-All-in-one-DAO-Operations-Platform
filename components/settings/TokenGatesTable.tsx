@@ -5,27 +5,17 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { TokenGate } from '@prisma/client';
 import { useWeb3React } from '@web3-react/core';
-import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import Table from 'components/common/Table';
 import DeleteIcon from '@mui/icons-material/Close';
 import ButtonChip from 'components/common/ButtonChip';
 import Tooltip from '@mui/material/Tooltip';
 import useLitProtocol from 'adapters/litProtocol/hooks/useLitProtocol';
 import Chip from '@mui/material/Chip';
 import charmClient from 'charmClient';
-
-export const StyledRow = styled(TableRow)`
-  .row-actions {
-    opacity: 0;
-    transition: opacity 0.2s ease-in-out;
-  }
-  &:hover .row-actions {
-    opacity: 1;
-  }
-`;
 
 interface Props {
   tokenGates: TokenGate[];
@@ -67,7 +57,7 @@ export default function ContributorRow ({ isAdmin, onDelete, tokenGates }: Props
   }
 
   return (
-    <Table size='small' aria-label='simple table'>
+    <Table>
       <TableHead>
         <TableRow>
           <TableCell sx={{ px: 0 }}>Description</TableCell>
@@ -78,7 +68,7 @@ export default function ContributorRow ({ isAdmin, onDelete, tokenGates }: Props
       </TableHead>
       <TableBody>
         {tokenGates.map((row, index) => (
-          <StyledRow key={row.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+          <TableRow key={row.id}>
             <TableCell sx={{ px: 0 }}>
               <Typography>{descriptions[index]}</Typography>
             </TableCell>
@@ -106,7 +96,7 @@ export default function ContributorRow ({ isAdmin, onDelete, tokenGates }: Props
                 </Tooltip>
               )}
             </TableCell>
-          </StyledRow>
+          </TableRow>
         ))}
       </TableBody>
     </Table>

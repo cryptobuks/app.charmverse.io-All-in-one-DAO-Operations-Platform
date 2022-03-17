@@ -2,7 +2,7 @@ import { useTheme } from '@emotion/react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
-import Table from '@mui/material/Table';
+import Table from 'components/common/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
@@ -42,15 +42,6 @@ export function BountyApplicantList ({ applications, bounty, bountyReassigned = 
     return contributors.find(c => c.id === userId);
   }
 
-  // if (loading.current === true) {
-  //   return (
-  //     <>
-  //       <Typography>Loading proposals</Typography>
-  //       <CircularProgress/>
-  //     </>
-  //   );
-  // }
-
   async function assignBounty (assignee: string) {
     await charmClient.assignBounty(bounty.id, assignee);
     bountyReassigned();
@@ -72,27 +63,9 @@ export function BountyApplicantList ({ applications, bounty, bountyReassigned = 
   return (
     <Box component='div' sx={{ minHeight: `${minHeight}px`, marginBottom: '15px', maxHeight: '70vh', overflowY: 'auto' }}>
       <Table stickyHeader={true} sx={{ minWidth: 650 }} aria-label='bounty applicant table'>
-        <TableHead sx={{
-          background: theme.palette.background.dark,
-          '& .MuiTableCell-head': {
-            fontSize: 18
-          },
-          '& .MuiTableCell-root': {
-            background: 'inherit'
-          }
-        }}
-        >
+        <TableHead>
           <TableRow>
-            <TableCell>
-              <Box sx={{
-                display: 'flex',
-                alignItems: 'center'
-              }}
-              >
-                {/* <AutorenewIcon onClick={refreshApplications} /> */}
-                Applicant
-              </Box>
-            </TableCell>
+            <TableCell>Applicant</TableCell>
             <TableCell>Message</TableCell>
             <TableCell>Date</TableCell>
             <TableCell></TableCell>
@@ -100,11 +73,8 @@ export function BountyApplicantList ({ applications, bounty, bountyReassigned = 
         </TableHead>
         {applications.length !== 0 && (
           <TableBody>
-            {applications.map((application, applicationIndex) => (
-              <TableRow
-                key={application.id}
-                sx={{ backgroundColor: applicationIndex % 2 !== 0 ? theme.palette.background.default : theme.palette.background.light, '&:last-child td, &:last-child th': { border: 0 } }}
-              >
+            {applications.map(application => (
+              <TableRow key={application.id}>
                 <TableCell size='small'>
                   {getDisplayName(getContributor(application.createdBy))}
                 </TableCell>

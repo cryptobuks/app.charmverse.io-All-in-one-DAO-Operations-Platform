@@ -1,13 +1,12 @@
 import DeleteIcon from '@mui/icons-material/Delete';
 import LaunchIcon from '@mui/icons-material/LaunchOutlined';
 import Box from '@mui/material/Box';
-import Table from '@mui/material/Table';
+import Table from 'components/common/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
 import Tooltip from '@mui/material/Tooltip';
-import { StyledRow } from 'components/settings/TokenGatesTable';
+import TableRow from '@mui/material/TableRow';
 import { getChainById, getChainExplorerLink } from 'connectors';
 import { PaymentMethod } from '@prisma/client';
 import { useUser } from 'hooks/useUser';
@@ -54,7 +53,7 @@ export default function CompositePaymentMethodList ({ paymentMethods }: IProps) 
         }}
       />
 
-      <Table size='small' aria-label='simple table'>
+      <Table>
         <TableHead>
           <TableRow>
             <TableCell sx={{ px: 0 }}>Token</TableCell>
@@ -66,7 +65,7 @@ export default function CompositePaymentMethodList ({ paymentMethods }: IProps) 
         </TableHead>
         <TableBody>
           {sortedMethods.map((row) => (
-            <StyledRow key={row.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+            <TableRow key={row.id}>
               <TableCell sx={{ px: 0 }}>
                 {row.contractAddress ? (
                   <Tooltip arrow placement='top' title={`Contract address: ${shortenHex(row.contractAddress)}`}>
@@ -80,7 +79,7 @@ export default function CompositePaymentMethodList ({ paymentMethods }: IProps) 
                   `${row.tokenName} (${row.tokenSymbol})`
                 )}
               </TableCell>
-              <TableCell width={25}>
+              <TableCell width='64px'>
                 {
                   row.tokenLogo && (
                     <img
@@ -116,7 +115,7 @@ export default function CompositePaymentMethodList ({ paymentMethods }: IProps) 
                 )
               }
               </TableCell>
-            </StyledRow>
+            </TableRow>
           ))}
         </TableBody>
       </Table>
