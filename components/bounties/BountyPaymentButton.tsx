@@ -50,7 +50,7 @@ function extractWalletErrorMessage (error: any): string {
  * @param chainId
  * @returns
  */
-async function switchActiveNetwork (chainId: number, errorCallback: (message: string) => void = () => {}) {
+export async function switchActiveNetwork (chainId: number, errorCallback: (message: string) => void = () => {}) {
   try {
     await (window as any).ethereum.request({
       method: 'wallet_switchEthereumChain',

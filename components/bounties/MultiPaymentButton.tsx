@@ -20,7 +20,7 @@ interface Props {
 
 export default function MultiPaymentButton ({ chainId, safeAddress, transactions, onSuccess }: Props) {
   const { account } = useWeb3React();
-  const safe = useGnosisSafe({ safeAddress });
+  const safe = useGnosisSafe({ chainId, safeAddress });
   const network = getChainById(chainId);
   if (!network?.gnosisUrl) {
     throw new Error(`Invalid network: ${chainId}`);
