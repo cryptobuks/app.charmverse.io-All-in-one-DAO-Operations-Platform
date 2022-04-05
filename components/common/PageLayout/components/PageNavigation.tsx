@@ -272,9 +272,12 @@ const PageTreeItem = forwardRef((props: any, ref) => {
   const [user] = useUser();
   const page = pages[pageId];
   // Check if the current user is an admin, admin means implicit full access
-  const isAdminOfSpace = useMemo(() => user?.spaceRoles.find(spaceRole => spaceRole.spaceId === space?.id && spaceRole.isAdmin), [user, space]);
+  const isAdminOfSpace = useMemo(
+    () => user?.spaceRoles.findIndex(spaceRole => spaceRole.spaceId === space?.id && (spaceRole.isAdmin || spaceRole.role === 'admin')) !== -1,
+    [user, space]
+  );
   const { roles } = useRoles();
-  let canDelete = !!isAdminOfSpace;
+  let canDelete = isAdminOfSpace;
   const rolesOfUser = useMemo(() => {
     const _rolesOfUser: string[] = [];
     if (roles && user) {
