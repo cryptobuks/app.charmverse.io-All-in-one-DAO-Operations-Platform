@@ -111,7 +111,7 @@ class CharmClient {
   }
 
   createPage (pageOpts: Prisma.PageCreateInput) {
-    return http.POST<Page>('/api/pages', pageOpts);
+    return http.POST<Page & {permissions: PagePermission[]}>('/api/pages', pageOpts);
   }
 
   deletePage (pageId: string) {

@@ -14,14 +14,14 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
-import { Space } from '@prisma/client';
-import charmClient from 'charmClient';
+import { PagePermission, Space } from '@prisma/client';
+import charmClient, { ListSpaceRolesResponse } from 'charmClient';
 import TreeItemContent from 'components/common/TreeItemContent';
 import mutator from 'components/common/BoardEditor/focalboard/src/mutator';
 import EmojiPicker from 'components/common/BoardEditor/focalboard/src/widgets/emojiPicker';
 import { useFocalboardViews } from 'hooks/useFocalboardViews';
 import { useLocalStorage } from 'hooks/useLocalStorage';
-import { usePages } from 'hooks/usePages';
+import { PageWithPermission, usePages } from 'hooks/usePages';
 import useRefState from 'hooks/useRefState';
 import { sortArrayByObjectProperty } from 'lib/utilities/array';
 import { isTruthy } from 'lib/utilities/types';
@@ -36,10 +36,14 @@ import EmojiIcon from 'components/common/Emoji';
 import { useAppSelector } from 'components/common/BoardEditor/focalboard/src/store/hooks';
 import { iconForViewType } from 'components/common/BoardEditor/focalboard/src/components/viewMenu';
 import { IViewType } from 'components/common/BoardEditor/focalboard/src/blocks/boardView';
+import { useContributors } from 'hooks/useContributors';
+import { useUser } from 'hooks/useUser';
+import { useCurrentSpace } from 'hooks/useCurrentSpace';
+import useRoles from 'components/settings/roles/hooks/useRoles';
 import AddNewCard from './AddNewCard';
 // based off https://codesandbox.io/s/dawn-resonance-pgefk?file=/src/Demo.js
 
-export type MenuNode = Page & {
+export type MenuNode = PageWithPermission & {
   children: MenuNode[];
 }
 
@@ -263,6 +267,49 @@ const PageTreeItem = forwardRef((props: any, ref) => {
     ...other
   } = props;
 
+  const { pages } = usePages();
+  const [space] = useCurrentSpace();
+  const [user] = useUser();
+  const page = pages[pageId];
+  // Check if the current user is an admin, admin means implicit full access
+  const isAdminOfSpace = useMemo(() => user?.spaceRoles.find(spaceRole => spaceRole.spaceId === space?.id && spaceRole.isAdmin), [user, space]);
+  const { roles } = useRoles();
+  let canDelete = !!isAdminOfSpace;
+  const rolesOfUser = useMemo(() => {
+    const _rolesOfUser: string[] = [];
+    if (roles && user) {
+      for (const role of roles) {
+        for (const spaceRoleToRole of role.spaceRolesToRole) {
+          if (spaceRoleToRole.spaceRole.user.id === user.id) {
+            _rolesOfUser.push(role.id);
+            break;
+          }
+        }
+      }
+    }
+    return _rolesOfUser;
+  }, [roles]);
+
+  if (!isAdminOfSpace && page && user && space && page.permissions) {
+    for (const permission of page.permissions) {
+      // For individual user id
+      if (permission.userId === user.id && permission.permissionLevel.match(/(editor|full_access)/)) {
+        canDelete = true;
+        break;
+      }
+
+      if (permission.spaceId === space.id && permission.permissionLevel.match(/(editor|full_access)/)) {
+        canDelete = true;
+        break;
+      }
+
+      if (permission.roleId && rolesOfUser.includes(permission.roleId) && permission.permissionLevel.match(/(editor|full_access)/)) {
+        canDelete = true;
+        break;
+      }
+    }
+  }
+
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
   function showMenu (event: React.MouseEvent<HTMLElement>) {
@@ -317,7 +364,7 @@ const PageTreeItem = forwardRef((props: any, ref) => {
               {addSubPage && pageType === 'board' ? (
                 <AddNewCard pageId={pageId} />
               ) : (
-                <NewPageMenu tooltip='Add a page inside' addPage={page => addSubPage(page)} sx={{ marginLeft: '3px' }} />
+                <NewPageMenu tooltip='Add a page inside' addPage={_page => addSubPage(_page)} sx={{ marginLeft: '3px' }} />
               )}
             </div>
           </PageLink>
@@ -340,7 +387,7 @@ const PageTreeItem = forwardRef((props: any, ref) => {
           horizontal: 'left'
         }}
       >
-        <MenuItem sx={{ padding: '3px 12px' }} onClick={deletePage}>
+        <MenuItem disabled={!canDelete} sx={{ padding: '3px 12px' }} onClick={deletePage}>
           <ListItemIcon><DeleteIcon fontSize='small' /></ListItemIcon>
           <Typography sx={{ fontSize: 15, fontWeight: 600 }}>Delete</Typography>
         </MenuItem>
@@ -554,7 +601,7 @@ function RenderDraggableNode ({ item, onDropAdjacent, onDropChild, pathPrefix, a
   );
 }
 
-function mapTree (items: Page[], key: 'parentId', rootPageIds?: string[]): MenuNode[] {
+function mapTree (items: (Page)[], key: 'parentId', rootPageIds?: string[]): MenuNode[] {
   const tempItems = items.map((item): MenuNode => {
     return {
       ...item,

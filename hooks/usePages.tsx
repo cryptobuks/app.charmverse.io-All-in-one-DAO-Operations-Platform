@@ -1,4 +1,4 @@
-import { Page, PageOperations, Prisma, Role } from '@prisma/client';
+import { Page, PageOperations, PagePermission, Prisma, Role } from '@prisma/client';
 import useSWR from 'swr';
 import charmClient from 'charmClient';
 import { addBoardClicked } from 'components/common/BoardEditor/focalboard/src/components/sidebar/sidebarAddBoardMenu';
@@ -12,16 +12,18 @@ import { useCurrentSpace } from './useCurrentSpace';
 import { useUser } from './useUser';
 import { IPagePermissionFlags, IPageWithPermissions, PageOperationType } from '../lib/permissions/pages/page-permission-interfaces';
 
-type AddPageFn = (page?: Partial<Page>) => Promise<Page>;
+export type PageWithPermission = Page & {permissions?: PagePermission[]}
+
+type AddPageFn = (page?: Partial<Page>) => Promise<PageWithPermission>;
 type IContext = {
   currentPageId: string,
-  pages: Record<string, Page | undefined>,
+  pages: Record<string, PageWithPermission | undefined>,
   setCurrentPageId: Dispatch<SetStateAction<string>>,
-  setPages: Dispatch<SetStateAction<Record<string, Page | undefined>>>,
+  setPages: Dispatch<SetStateAction<Record<string, PageWithPermission | undefined>>>,
   isEditing: boolean
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>
   addPage: AddPageFn,
-  addPageAndRedirect: (page?: Partial<Page>) => void
+  addPageAndRedirect: (page?: Partial<PageWithPermission>) => void
   getPagePermissions: (pageId: string) => IPagePermissionFlags
 };
 
@@ -42,7 +44,7 @@ export const PagesContext = createContext<Readonly<IContext>>({
 export function PagesProvider ({ children }: { children: ReactNode }) {
   const [isEditing, setIsEditing] = useState(false);
   const [space] = useCurrentSpace();
-  const [pages, setPages] = useState<Record<string, Page | undefined>>({});
+  const [pages, setPages] = useState<Record<string, PageWithPermission | undefined>>({});
   const [currentPageId, setCurrentPageId] = useState<string>('');
   const router = useRouter();
   const intl = useIntl();
