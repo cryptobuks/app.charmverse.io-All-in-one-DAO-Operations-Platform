@@ -33,6 +33,7 @@ import Link from 'components/common/Link';
 import { Modal } from 'components/common/Modal';
 import NewPageMenu from 'components/common/NewPageMenu';
 import WorkspaceAvatar from 'components/common/WorkspaceAvatar';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { headerHeight } from './Header';
 import PageNavigation from './PageNavigation';
 
@@ -77,10 +78,28 @@ const SidebarContainer = styled.div`
 const sidebarItemStyles = ({ theme }: { theme: Theme }) => css`
   padding-left: ${theme.spacing(2)};
   padding-right: ${theme.spacing(2)};
+  align-items: center;
+  color: ${theme.palette.secondary.main};
+  display: flex;
+  font-size: 14px;
+  font-weight: 500;
+  padding-top: 4px;
+  padding-bottom: 4px;
+
+  :hover {
+    background-color: ${theme.palette.action.hover};
+    color: inherit;
+  }
+
+  svg {
+    font-size: 1.2em;
+    margin-right: ${theme.spacing(1)};
+  }
 `;
 
 const SectionName = styled(Typography)`
-  ${sidebarItemStyles}
+  padding-left: ${({ theme }) => theme.spacing(2)};
+  padding-right: ${({ theme }) => theme.spacing(2)};;
   color: ${({ theme }) => theme.palette.secondary.main};
   font-size: 11.5px;
   font-weight: 600;
@@ -90,25 +109,14 @@ const SectionName = styled(Typography)`
 
 const StyledSidebarLink = styled(Link)<{ active: boolean }>`
   ${sidebarItemStyles}
-  align-items: center;
-  color: ${({ theme }) => theme.palette.secondary.main};
-  display: flex;
-  font-size: 14px;
-  font-weight: 500;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  :hover {
-    background-color: ${({ theme }) => theme.palette.action.hover};
-    color: inherit;
-  }
   ${({ active, theme }) => active ? `
     background-color: ${theme.palette.action.selected};
     color: ${theme.palette.text.primary};
   ` : ''}
-  svg {
-    font-size: 1.2em;
-    margin-right: ${({ theme }) => theme.spacing(1)};
-  }
+`;
+
+const StyledSidebarItem = styled(Box)`
+  ${sidebarItemStyles}
 `;
 
 const SidebarHeader = styled.div(({ theme }) => ({
@@ -134,13 +142,6 @@ const SidebarHeader = styled.div(({ theme }) => ({
   minHeight: headerHeight
 }));
 
-const SidebarFooter = styled.div`
-  padding: ${({ theme }) => theme.spacing(1)};
-  display: flex;
-  align-items: center;
-  border-top: 1px solid ${({ theme }) => theme.palette.divider};
-`;
-
 const ScrollingContainer = styled.div<{ isScrolled: boolean }>`
   flex-grow: 1;
   overflow-y: auto;
@@ -151,7 +152,7 @@ const ScrollingContainer = styled.div<{ isScrolled: boolean }>`
 
 function SidebarLink ({ active, href, icon, label }: { active: boolean, href: string, icon: any, label: string }) {
   return (
-    <StyledSidebarLink href={href} active={active}>
+    <StyledSidebarLink active={active} href={href}>
       {icon}
       {label}
     </StyledSidebarLink>
@@ -197,6 +198,7 @@ export default function Sidebar ({ closeSidebar, favorites }: SidebarProps) {
   }
 
   async function deletePage (pageId: string) {
+    const currentPage = pages[currentPageId];
     const page = pages[pageId];
     if (page) {
       const deletedPageIds = await charmClient.deletePage(page.id);
@@ -229,7 +231,6 @@ export default function Sidebar ({ closeSidebar, favorites }: SidebarProps) {
       }
     }
 
-    const currentPage = pages[currentPageId];
     // Redirect from current page
     if (page && currentPage && page.id === currentPage.id) {
       let newPath = `/${space!.domain}`;
@@ -323,6 +324,12 @@ export default function Sidebar ({ closeSidebar, favorites }: SidebarProps) {
                 icon={<BountyIcon fontSize='small' />}
                 label='Bounties'
               />
+            </Box>
+            <Box sx={{ mb: 2 }}>
+              <StyledSidebarItem>
+                <DeleteIcon fontSize='small' />
+                Trash
+              </StyledSidebarItem>
             </Box>
           </ScrollingContainer>
         </Box>
