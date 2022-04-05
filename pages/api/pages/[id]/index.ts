@@ -4,10 +4,9 @@ import nc from 'next-connect';
 import { onError, onNoMatch, requireKeys, requireUser } from 'lib/middleware';
 import { withSessionRoute } from 'lib/session/withSession';
 import { requirePagePermissions } from 'lib/middleware/requirePagePermissions';
-import { Page, PagePermissionLevel } from '@prisma/client';
+import { Page } from '@prisma/client';
 import { prisma } from 'db';
 import { computeUserPagePermissions } from 'lib/permissions/pages/page-permission-compute';
-import { PageOperationType } from 'lib/permissions/pages/page-permission-interfaces';
 
 const handler = nc<NextApiRequest, NextApiResponse>({ onError, onNoMatch });
 
@@ -29,7 +28,7 @@ async function updatePage (req: NextApiRequest, res: NextApiResponse) {
 
   const updateContent = req.body as Page;
 
-  // eslint-disable-next-line eqeqeq
+  // eslint-disable-next-line
   if (updateContent.isPublic != undefined && permissions.edit_isPublic !== true) {
     return res.status(401).json({
       error: 'You cannot update the public status of this page'
@@ -69,6 +68,7 @@ async function deletePage (req: NextApiRequest, res: NextApiResponse) {
   ] : [];
 
   while (currentDeletedPages.length !== 0) {
+    // A temporary array to store all the pages that can be delete in next iteration
     const newPagesToDelete: string[] = [];
     for (const pageId of currentDeletedPages) {
       const permissionSet = await computeUserPagePermissions({
@@ -102,7 +102,7 @@ async function deletePage (req: NextApiRequest, res: NextApiResponse) {
       deletedAt: new Date()
     }
   });
-  return res.status(200).json({ deletedPageIds: pagesToDelete });
+  return res.status(200).json(pagesToDelete);
 }
 
 export default withSessionRoute(handler);

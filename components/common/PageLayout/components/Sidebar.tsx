@@ -198,10 +198,12 @@ export default function Sidebar ({ closeSidebar, favorites }: SidebarProps) {
 
   async function deletePage (pageId: string) {
     const page = pages[pageId];
-    let newPages = { ...pages };
-    delete newPages[pageId];
     if (page) {
-      await charmClient.deletePage(page.id);
+      const deletedPageIds = await charmClient.deletePage(page.id);
+      deletedPageIds.forEach(deletedPageId => {
+        delete pages[deletedPageId];
+      });
+      let newPages = { ...pages };
       if (Object.keys(newPages).length === 0) {
         const newPage = await charmClient.createPage(untitledPage({
           userId: user!.id,
@@ -209,8 +211,8 @@ export default function Sidebar ({ closeSidebar, favorites }: SidebarProps) {
         }));
         newPages = { [newPage.id]: newPage };
       }
+      setPages(newPages);
     }
-    setPages(newPages);
     if (page?.boardId) {
       const board = boards.find(b => b.id === page.boardId);
       if (board) {

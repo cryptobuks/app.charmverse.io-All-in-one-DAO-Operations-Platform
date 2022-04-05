@@ -20,6 +20,7 @@ async function getPages (req: NextApiRequest, res: NextApiResponse<Page[]>) {
     where: {
       OR: [
         {
+          alive: true,
           spaceId,
           permissions: {
             some: {
@@ -46,6 +47,7 @@ async function getPages (req: NextApiRequest, res: NextApiResponse<Page[]>) {
           }
         },
         {
+          alive: true,
           space: {
             id: spaceId,
             spaceRoles: {
@@ -62,7 +64,6 @@ async function getPages (req: NextApiRequest, res: NextApiResponse<Page[]>) {
           }
         }
       ]
-
     },
     include: {
       permissions: true
