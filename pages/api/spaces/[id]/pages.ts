@@ -13,6 +13,7 @@ handler.use(requireUser).get(getPages);
 async function getPages (req: NextApiRequest, res: NextApiResponse<Page[]>) {
 
   const spaceId = req.query.id as string;
+  const isAlive = req.query.alive ? req.query.alive === '1' : true;
 
   const userId = req.session.user.id;
 
@@ -20,7 +21,7 @@ async function getPages (req: NextApiRequest, res: NextApiResponse<Page[]>) {
     where: {
       OR: [
         {
-          alive: true,
+          alive: isAlive,
           spaceId,
           permissions: {
             some: {
@@ -47,7 +48,7 @@ async function getPages (req: NextApiRequest, res: NextApiResponse<Page[]>) {
           }
         },
         {
-          alive: true,
+          alive: isAlive,
           space: {
             id: spaceId,
             spaceRoles: {

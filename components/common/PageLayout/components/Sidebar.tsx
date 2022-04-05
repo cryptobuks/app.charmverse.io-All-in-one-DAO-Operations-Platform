@@ -13,19 +13,19 @@ import IconButton from '@mui/material/IconButton';
 import MuiLink from '@mui/material/Link';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { Prisma } from '@prisma/client';
+import { Page, Prisma } from '@prisma/client';
 import charmClient from 'charmClient';
 import mutator from 'components/common/BoardEditor/focalboard/src/mutator';
 import { getSortedBoards } from 'components/common/BoardEditor/focalboard/src/store/boards';
 import { useAppSelector } from 'components/common/BoardEditor/focalboard/src/store/hooks';
 import { useCurrentSpace } from 'hooks/useCurrentSpace';
-import { usePages } from 'hooks/usePages';
+import { PageWithPermission, usePages } from 'hooks/usePages';
 import { useSpaces } from 'hooks/useSpaces';
 import { useUser } from 'hooks/useUser';
 import { LoggedInUser } from 'models';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { untitledPage } from 'seedData';
 import CreateWorkspaceForm from 'components/common/CreateSpaceForm';
@@ -34,6 +34,7 @@ import { Modal } from 'components/common/Modal';
 import NewPageMenu from 'components/common/NewPageMenu';
 import WorkspaceAvatar from 'components/common/WorkspaceAvatar';
 import DeleteIcon from '@mui/icons-material/Delete';
+import useSWR from 'swr';
 import { headerHeight } from './Header';
 import PageNavigation from './PageNavigation';
 
@@ -175,6 +176,13 @@ export default function Sidebar ({ closeSidebar, favorites }: SidebarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const favoritePageIds = favorites.map(f => f.pageId);
   const intl = useIntl();
+  const [, setUnAlivePages] = useState<Record<string, Page>>({});
+  const { data: unAlivePages } = useSWR(() => space ? `unalive_pages/${space?.id}` : null, () => charmClient.getPages(space!.id, false));
+  useEffect(() => {
+    setUnAlivePages(unAlivePages?.reduce((acc, page) => ({ ...acc, [page.id]: page }), {}) || {});
+  }, [unAlivePages]);
+
+  console.log();
 
   function showSpaceForm () {
     setSpaceFormOpen(true);
