@@ -76,8 +76,6 @@ export async function computeUserPagePermissions (request: IPagePermissionUserRe
     prisma.pagePermission.findMany(permissionsQuery(request))
   ]);
 
-  const page = permissionWithSpaceRoleAndPermissions[0];
-
   // Check if user is a space admin for this page so they gain full rights
   const foundSpaceRole = permissionWithSpaceRoleAndPermissions[0]?.space?.spaceRoles?.[0];
 
@@ -104,10 +102,8 @@ export async function computeUserPagePermissions (request: IPagePermissionUserRe
   }
 
   permissions.forEach(permission => {
-
     // Custom permissions are persisted to the database. Other permission groups are evaluated by the current mapping
     const permissionsToAdd = permission.permissionLevel === 'custom' ? permission.permissions : permissionTemplates[permission.permissionLevel];
-
     computedPermissions.addPermissions(permissionsToAdd);
   });
 

@@ -22,13 +22,11 @@ export class AllowedPagePermissions implements IPagePermissionFlags {
 
   grant_permissions: boolean = false;
 
-  constructor (initialPermissions: PageOperationType [] | Partial<IPagePermissionFlags> = []) {
-
+  constructor (initialPermissions: PageOperationType[] | Partial<IPagePermissionFlags> = []) {
     this.addPermissions(initialPermissions);
   }
 
-  addPermissions (permissions: PageOperationType [] | Partial<IPagePermissionFlags>) {
-
+  addPermissions (permissions: PageOperationType[] | Partial<IPagePermissionFlags>) {
     if (permissions instanceof Array) {
       permissions.forEach(permissionName => {
         if (PageOperations[permissionName]) {
@@ -37,15 +35,12 @@ export class AllowedPagePermissions implements IPagePermissionFlags {
       });
     }
     else {
-      const permissionKeys = Object.keys(permissions) as PageOperationType [];
+      const permissionKeys = Object.keys(permissions) as PageOperationType[];
       permissionKeys.forEach(permissionName => {
-
         if (PageOperations[permissionName] && permissions[permissionName] === true) {
           this[permissionName] = true;
         }
-
       });
     }
   }
-
 }

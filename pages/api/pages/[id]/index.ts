@@ -4,9 +4,10 @@ import nc from 'next-connect';
 import { onError, onNoMatch, requireKeys, requireUser } from 'lib/middleware';
 import { withSessionRoute } from 'lib/session/withSession';
 import { requirePagePermissions } from 'lib/middleware/requirePagePermissions';
-import { Page } from '@prisma/client';
+import { Page, PagePermissionLevel } from '@prisma/client';
 import { prisma } from 'db';
 import { computeUserPagePermissions } from 'lib/permissions/pages/page-permission-compute';
+import { PageOperationType } from 'lib/permissions/pages/page-permission-interfaces';
 
 const handler = nc<NextApiRequest, NextApiResponse>({ onError, onNoMatch });
 
@@ -54,13 +55,54 @@ async function updatePage (req: NextApiRequest, res: NextApiResponse) {
 }
 
 async function deletePage (req: NextApiRequest, res: NextApiResponse) {
-
-  await prisma.page.delete({
+  const userId = req.session.user.id;
+  const rootPage = await prisma.page.findUnique({
     where: {
       id: req.query.id as string
     }
   });
-  return res.status(200).json({ ok: true });
+
+  const pagesToDelete: string[] = [];
+
+  let currentDeletedPages: string[] = rootPage?.id ? [
+    rootPage.id
+  ] : [];
+
+  while (currentDeletedPages.length !== 0) {
+    const newPagesToDelete: string[] = [];
+    for (const pageId of currentDeletedPages) {
+      const permissionSet = await computeUserPagePermissions({
+        pageId,
+        userId
+      });
+
+      // If the user is allowed to delete this page, go further and to check if we can delete more of its children
+      if (permissionSet.delete === true) {
+        pagesToDelete.push(pageId);
+        const childPages = await prisma.page.findMany({
+          where: {
+            parentId: pageId
+          }
+        });
+
+        newPagesToDelete.push(...childPages.map(childPage => childPage.id));
+      }
+    }
+    currentDeletedPages = newPagesToDelete;
+  }
+
+  await prisma.page.updateMany({
+    where: {
+      id: {
+        in: pagesToDelete
+      }
+    },
+    data: {
+      alive: false,
+      deletedAt: new Date()
+    }
+  });
+  return res.status(200).json({ deletedPageIds: pagesToDelete });
 }
 
 export default withSessionRoute(handler);
