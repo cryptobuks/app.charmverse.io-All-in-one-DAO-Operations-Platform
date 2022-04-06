@@ -19,7 +19,7 @@ import mutator from 'components/common/BoardEditor/focalboard/src/mutator';
 import { getSortedBoards } from 'components/common/BoardEditor/focalboard/src/store/boards';
 import { useAppSelector } from 'components/common/BoardEditor/focalboard/src/store/hooks';
 import { useCurrentSpace } from 'hooks/useCurrentSpace';
-import { PageWithPermission, usePages } from 'hooks/usePages';
+import { usePages } from 'hooks/usePages';
 import { useSpaces } from 'hooks/useSpaces';
 import { useUser } from 'hooks/useUser';
 import { LoggedInUser } from 'models';
@@ -36,10 +36,14 @@ import WorkspaceAvatar from 'components/common/WorkspaceAvatar';
 import DeleteIcon from '@mui/icons-material/Delete';
 import useSWR from 'swr';
 import { bindTrigger, bindPopover, usePopupState } from 'material-ui-popup-state/hooks';
-import { ListItem, ListItemIcon, ListItemText } from '@mui/material';
+import { ListItem, ListItemAvatar, ListItemIcon, ListItemText } from '@mui/material';
 import RestoreIcon from '@mui/icons-material/Restore';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import PageNavigation, { StyledPageIcon } from './PageNavigation';
 import { headerHeight } from './Header';
+
+dayjs.extend(relativeTime);
 
 const AvatarLink = styled(NextLink)`
   cursor: pointer;
@@ -345,35 +349,52 @@ export default function Sidebar ({ closeSidebar, favorites }: SidebarProps) {
           </ScrollingContainer>
         </Box>
       )}
-      <Modal {...bindPopover(popupState)}>
-        {unAlivePages?.map(unAlivePage => {
-          return (
-            <ListItem>
-              <ListItemText sx={{
-                '& .MuiTypography-root': {
-                  display: 'flex',
-                  alignItems: 'center'
-                }
-              }}
-              >
-                {unAlivePage.icon && <StyledPageIcon icon={unAlivePage.icon} />}
-                {unAlivePage.title || 'Untitled'}
-              </ListItemText>
-              <ListItemIcon>
-                <IconButton>
-                  <Tooltip title='Delete permanently'>
-                    <DeleteIcon fontSize='small' />
-                  </Tooltip>
-                </IconButton>
-                <IconButton>
-                  <Tooltip title='Restore Page'>
-                    <RestoreIcon fontSize='small' />
-                  </Tooltip>
-                </IconButton>
-              </ListItemIcon>
-            </ListItem>
-          );
-        })}
+      <Modal
+        {...bindPopover(popupState)}
+      >
+        <Typography variant='h6' color='secondary'>
+          Trash
+        </Typography>
+        <Box sx={{
+          maxHeight: 500,
+          overflow: 'auto'
+        }}
+        >
+          {unAlivePages?.map(unAlivePage => {
+            return (
+              <ListItem>
+                <ListItemIcon sx={{
+                  minWidth: 40
+                }}
+                >
+                  {unAlivePage.icon && <StyledPageIcon icon={unAlivePage.icon} />}
+                </ListItemIcon>
+                <ListItemText
+                  sx={{
+                    '& .MuiTypography-root': {
+                      display: 'flex',
+                      alignItems: 'center'
+                    } }}
+                  secondary={`Deleted ${dayjs().to(dayjs(unAlivePage.deletedAt))}`}
+                >
+                  {unAlivePage.title || 'Untitled'}
+                </ListItemText>
+                <ListItemIcon>
+                  <IconButton>
+                    <Tooltip title='Delete permanently'>
+                      <DeleteIcon fontSize='small' color='error' />
+                    </Tooltip>
+                  </IconButton>
+                  <IconButton>
+                    <Tooltip title='Restore Page'>
+                      <RestoreIcon fontSize='small' color='info' />
+                    </Tooltip>
+                  </IconButton>
+                </ListItemIcon>
+              </ListItem>
+            );
+          })}
+        </Box>
       </Modal>
     </SidebarContainer>
   );
