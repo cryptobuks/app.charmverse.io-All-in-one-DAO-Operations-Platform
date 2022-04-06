@@ -40,7 +40,7 @@ import { ListItem, ListItemAvatar, ListItemIcon, ListItemText } from '@mui/mater
 import RestoreIcon from '@mui/icons-material/Restore';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import PageNavigation, { StyledPageIcon } from './PageNavigation';
+import PageNavigation, { PageIcon, StyledPageIcon } from './PageNavigation';
 import { headerHeight } from './Header';
 
 dayjs.extend(relativeTime);
@@ -191,6 +191,11 @@ export default function Sidebar ({ closeSidebar, favorites }: SidebarProps) {
         deadPagesRecord[page.id] = page;
       }
       return isDead;
+    }).sort((pageA, pageB) => {
+      if (pageA?.deletedAt && pageB?.deletedAt) {
+        return new Date(pageA.deletedAt).getTime() > new Date(pageB.deletedAt).getTime() ? -1 : 1;
+      }
+      return 0;
     }) as PageWithPermission[];
   }, [pages]);
 
@@ -240,10 +245,14 @@ export default function Sidebar ({ closeSidebar, favorites }: SidebarProps) {
     if (page) {
       const deletedPageIds = await charmClient.deletePage(page.id);
       deletedPageIds.forEach(deletedPageId => {
-        delete pages[deletedPageId];
+        if (pages[deletedPageId]) {
+          pages[deletedPageId]!.alive = false;
+          pages[deletedPageId]!.deletedAt = new Date();
+        }
       });
+      const alivePagesCount = Object.values(pages).filter(_page => _page && _page.alive).length;
       let newPages = { ...pages };
-      if (Object.keys(newPages).length === 0) {
+      if (alivePagesCount === 0) {
         const newPage = await charmClient.createPage(untitledPage({
           userId: user!.id,
           spaceId: space!.id
@@ -390,7 +399,7 @@ export default function Sidebar ({ closeSidebar, favorites }: SidebarProps) {
                   minWidth: 40
                 }}
                 >
-                  {deadPage.icon && <StyledPageIcon icon={deadPage.icon} />}
+                  <PageIcon isEditorEmpty={false} pageType={deadPage.type} icon={deadPage.icon} />
                 </ListItemIcon>
                 <ListItemText
                   sx={{
@@ -401,7 +410,7 @@ export default function Sidebar ({ closeSidebar, favorites }: SidebarProps) {
                   secondary={(
                     <Box>
                       <div>
-                        {`${dayjs().to(dayjs(deadPage.deletedAt))}`}
+                        {dayjs().to(dayjs(deadPage.deletedAt))}
                       </div>
                       {breadcrumbsRecord[deadPage.id] && (
                       <Box display='flex' gap={0.5}>

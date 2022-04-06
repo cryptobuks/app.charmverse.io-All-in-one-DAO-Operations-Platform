@@ -620,17 +620,19 @@ function mapTree (items: (Page)[], key: 'parentId', rootPageIds?: string[]): Men
   }
   for (i = 0; i < tempItems.length; i += 1) {
     node = tempItems[i];
-    const index = node[key] ? map[node[key]!] : -1;
-    // Make sure its not a database page
-    if (node[key] && tempItems[index] && !tempItems[index].boardId) {
-      tempItems[index].children.push(node);
-      sortArrayByObjectProperty(tempItems[index].children, 'index');
-    }
-    else if (!rootPageIds) {
-      roots.push(node);
-    }
-    if (rootPageIds?.includes(node.id)) {
-      roots.push(node);
+    if (node.alive !== false) {
+      const index = node[key] ? map[node[key]!] : -1;
+      // Make sure its not a database page
+      if (node[key] && tempItems[index] && !tempItems[index].boardId) {
+        tempItems[index].children.push(node);
+        sortArrayByObjectProperty(tempItems[index].children, 'index');
+      }
+      else if (!rootPageIds) {
+        roots.push(node);
+      }
+      if (rootPageIds?.includes(node.id)) {
+        roots.push(node);
+      }
     }
   }
 
