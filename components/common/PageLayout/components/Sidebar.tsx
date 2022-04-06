@@ -19,13 +19,13 @@ import mutator from 'components/common/BoardEditor/focalboard/src/mutator';
 import { getSortedBoards } from 'components/common/BoardEditor/focalboard/src/store/boards';
 import { useAppSelector } from 'components/common/BoardEditor/focalboard/src/store/hooks';
 import { useCurrentSpace } from 'hooks/useCurrentSpace';
-import { usePages } from 'hooks/usePages';
+import { PageWithPermission, usePages } from 'hooks/usePages';
 import { useSpaces } from 'hooks/useSpaces';
 import { useUser } from 'hooks/useUser';
 import { LoggedInUser } from 'models';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { untitledPage } from 'seedData';
 import CreateWorkspaceForm from 'components/common/CreateSpaceForm';
@@ -183,10 +183,26 @@ export default function Sidebar ({ closeSidebar, favorites }: SidebarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const favoritePageIds = favorites.map(f => f.pageId);
   const intl = useIntl();
-  const [, setUnAlivePages] = useState<Record<string, Page>>({});
   const { data: unAlivePages } = useSWR(() => space ? `unalive_pages/${space?.id}` : null, () => charmClient.getPages(space!.id, false));
-  useEffect(() => {
-    setUnAlivePages(unAlivePages?.reduce((acc, page) => ({ ...acc, [page.id]: page }), {}) || {});
+
+  const unAlivePagesRecord: Record<string, PageWithPermission | undefined> = useMemo(() => unAlivePages?.reduce((acc, page) => (
+    { ...acc, [page.id]: page }), {}) || {}, [unAlivePages]);
+
+  const breadcrumbsRecord = useMemo(() => {
+    const _breadcrumbsRecord: Record<string, string[]> = {};
+    unAlivePages?.forEach(unAlivePage => {
+      const breadcrumbs: string[] = [];
+      let activePage = pages[unAlivePage.id] ?? unAlivePagesRecord[unAlivePage.id];
+      while (activePage?.parentId) {
+        activePage = pages[activePage.parentId];
+        if (activePage) {
+          breadcrumbs.unshift(activePage.title || 'Untitled');
+        }
+      }
+      _breadcrumbsRecord[unAlivePage.id] = breadcrumbs;
+    });
+
+    return _breadcrumbsRecord;
   }, [unAlivePages]);
 
   const popupState = usePopupState({ variant: 'popover', popupId: 'multi-payment-modal' });
@@ -350,6 +366,7 @@ export default function Sidebar ({ closeSidebar, favorites }: SidebarProps) {
         </Box>
       )}
       <Modal
+        size='large'
         {...bindPopover(popupState)}
       >
         <Typography variant='h6' color='secondary'>
@@ -375,7 +392,23 @@ export default function Sidebar ({ closeSidebar, favorites }: SidebarProps) {
                       display: 'flex',
                       alignItems: 'center'
                     } }}
-                  secondary={`Deleted ${dayjs().to(dayjs(unAlivePage.deletedAt))}`}
+                  secondary={(
+                    <Box>
+                      <div>
+                        {`${dayjs().to(dayjs(unAlivePage.deletedAt))}`}
+                      </div>
+                      {breadcrumbsRecord[unAlivePage.id] && (
+                      <Box display='flex' gap={0.5}>
+                        {breadcrumbsRecord[unAlivePage.id].map((crumb, crumbIndex) => (
+                          <>
+                            <span>{crumb}</span>
+                            {crumbIndex !== breadcrumbsRecord[unAlivePage.id].length - 1 ? <span>/</span> : null}
+                          </>
+                        ))}
+                      </Box>
+                      )}
+                    </Box>
+                  )}
                 >
                   {unAlivePage.title || 'Untitled'}
                 </ListItemText>
