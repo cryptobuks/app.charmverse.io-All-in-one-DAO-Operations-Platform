@@ -106,9 +106,8 @@ class CharmClient {
     return http.GET<Block []>(`/api/blocks/views/${pageId}`);
   }
 
-  getPages (spaceId: string, alive?: boolean) {
-    alive = alive ?? true;
-    return http.GET<Page[]>(`/api/spaces/${spaceId}/pages?alive=${alive === true ? 1 : 0}`);
+  getPages (spaceId: string) {
+    return http.GET<Page[]>(`/api/spaces/${spaceId}/pages`);
   }
 
   createPage (pageOpts: Prisma.PageCreateInput) {

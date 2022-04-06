@@ -11,17 +11,12 @@ const handler = nc<NextApiRequest, NextApiResponse>({ onError, onNoMatch });
 handler.use(requireUser).get(getPages);
 
 async function getPages (req: NextApiRequest, res: NextApiResponse<Page[]>) {
-
   const spaceId = req.query.id as string;
-  const isAlive = req.query.alive ? req.query.alive === '1' : true;
-
   const userId = req.session.user.id;
-
   const pages = await prisma.page.findMany({
     where: {
       OR: [
         {
-          alive: isAlive,
           spaceId,
           permissions: {
             some: {
@@ -48,7 +43,6 @@ async function getPages (req: NextApiRequest, res: NextApiResponse<Page[]>) {
           }
         },
         {
-          alive: isAlive,
           space: {
             id: spaceId,
             spaceRoles: {

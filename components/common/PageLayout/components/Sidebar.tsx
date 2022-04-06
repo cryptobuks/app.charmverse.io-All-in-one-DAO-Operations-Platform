@@ -183,27 +183,33 @@ export default function Sidebar ({ closeSidebar, favorites }: SidebarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const favoritePageIds = favorites.map(f => f.pageId);
   const intl = useIntl();
-  const { data: unAlivePages } = useSWR(() => space ? `unalive_pages/${space?.id}` : null, () => charmClient.getPages(space!.id, false));
-
-  const unAlivePagesRecord: Record<string, PageWithPermission | undefined> = useMemo(() => unAlivePages?.reduce((acc, page) => (
-    { ...acc, [page.id]: page }), {}) || {}, [unAlivePages]);
+  const deadPagesRecord: Record<string, PageWithPermission | undefined> = {};
+  const deadPages = useMemo(() => {
+    return Object.values(pages).filter(page => {
+      const isDead = page && !page.alive;
+      if (isDead) {
+        deadPagesRecord[page.id] = page;
+      }
+      return isDead;
+    }) as PageWithPermission[];
+  }, [pages]);
 
   const breadcrumbsRecord = useMemo(() => {
     const _breadcrumbsRecord: Record<string, string[]> = {};
-    unAlivePages?.forEach(unAlivePage => {
+    deadPages?.forEach(deadPage => {
       const breadcrumbs: string[] = [];
-      let activePage = pages[unAlivePage.id] ?? unAlivePagesRecord[unAlivePage.id];
+      let activePage = pages[deadPage.id] ?? deadPagesRecord[deadPage.id];
       while (activePage?.parentId) {
         activePage = pages[activePage.parentId];
         if (activePage) {
           breadcrumbs.unshift(activePage.title || 'Untitled');
         }
       }
-      _breadcrumbsRecord[unAlivePage.id] = breadcrumbs;
+      _breadcrumbsRecord[deadPage.id] = breadcrumbs;
     });
 
     return _breadcrumbsRecord;
-  }, [unAlivePages]);
+  }, [deadPages]);
 
   const popupState = usePopupState({ variant: 'popover', popupId: 'multi-payment-modal' });
 
@@ -377,14 +383,14 @@ export default function Sidebar ({ closeSidebar, favorites }: SidebarProps) {
           overflow: 'auto'
         }}
         >
-          {unAlivePages?.map(unAlivePage => {
+          {deadPages.length === 0 ? <Typography variant='subtitle1'> No pages in thrash </Typography> : deadPages.map(deadPage => {
             return (
               <ListItem>
                 <ListItemIcon sx={{
                   minWidth: 40
                 }}
                 >
-                  {unAlivePage.icon && <StyledPageIcon icon={unAlivePage.icon} />}
+                  {deadPage.icon && <StyledPageIcon icon={deadPage.icon} />}
                 </ListItemIcon>
                 <ListItemText
                   sx={{
@@ -395,14 +401,14 @@ export default function Sidebar ({ closeSidebar, favorites }: SidebarProps) {
                   secondary={(
                     <Box>
                       <div>
-                        {`${dayjs().to(dayjs(unAlivePage.deletedAt))}`}
+                        {`${dayjs().to(dayjs(deadPage.deletedAt))}`}
                       </div>
-                      {breadcrumbsRecord[unAlivePage.id] && (
+                      {breadcrumbsRecord[deadPage.id] && (
                       <Box display='flex' gap={0.5}>
-                        {breadcrumbsRecord[unAlivePage.id].map((crumb, crumbIndex) => (
+                        {breadcrumbsRecord[deadPage.id].map((crumb, crumbIndex) => (
                           <>
                             <span>{crumb}</span>
-                            {crumbIndex !== breadcrumbsRecord[unAlivePage.id].length - 1 ? <span>/</span> : null}
+                            {crumbIndex !== breadcrumbsRecord[deadPage.id].length - 1 ? <span>/</span> : null}
                           </>
                         ))}
                       </Box>
@@ -410,7 +416,7 @@ export default function Sidebar ({ closeSidebar, favorites }: SidebarProps) {
                     </Box>
                   )}
                 >
-                  {unAlivePage.title || 'Untitled'}
+                  {deadPage.title || 'Untitled'}
                 </ListItemText>
                 <ListItemIcon>
                   <IconButton>
