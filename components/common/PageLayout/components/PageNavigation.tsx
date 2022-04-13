@@ -28,7 +28,7 @@ import { sortArrayByObjectProperty } from 'lib/utilities/array';
 import { isTruthy } from 'lib/utilities/types';
 import { bindMenu, bindTrigger, usePopupState } from 'material-ui-popup-state/hooks';
 import { Page, PageContent } from 'models';
-import Link from 'next/link';
+import NextLink from 'next/link';
 import React, { ComponentProps, Dispatch, forwardRef, ReactNode, SetStateAction, SyntheticEvent, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { greyColor2 } from 'theme/colors';
@@ -109,7 +109,7 @@ const AdjacentDropZone = styled.div`
   background-color: ${({ theme }) => theme.palette.primary.main};
 `;
 
-const PageAnchor = styled.a`
+const PageAnchor = styled.div`
   color: inherit;
   text-decoration: none;
   display: flex;
@@ -188,11 +188,11 @@ export function PageLink ({ showPicker = true, children, href, label, labelIcon,
         // No need to show hover style if we are not showing the picker when the icon is clicked
         <StyledPageIcon icon={labelIcon} {...triggerState} onClick={showPicker ? triggerState.onClick : undefined} />
       )}
-      <Link passHref href={href}>
+      <NextLink passHref href={href}>
         <PageTitle isempty={isempty ? 1 : 0}>
           {isempty ? 'Untitled' : label}
         </PageTitle>
-      </Link>
+      </NextLink>
       {children}
       {showPicker && (
       <Menu {...bindMenu(popupState)}>

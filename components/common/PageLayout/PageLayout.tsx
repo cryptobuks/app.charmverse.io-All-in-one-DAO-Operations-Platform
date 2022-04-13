@@ -77,7 +77,7 @@ const HeaderSpacer = styled.div`
   min-height: ${headerHeight}px;
 `;
 
-export default function PageLayout ({ children }: { children: React.ReactNode }) {
+function PageLayout ({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = React.useState(true);
   const [user] = useUser();
   const { currentPageId, pages } = usePages();
@@ -90,6 +90,7 @@ export default function PageLayout ({ children }: { children: React.ReactNode })
   const handleDrawerClose = React.useCallback(() => {
     setOpen(false);
   }, []);
+  console.log('Render: PageLayout');
 
   return (
     <>
@@ -111,3 +112,5 @@ export default function PageLayout ({ children }: { children: React.ReactNode })
     </>
   );
 }
+
+export default React.memo(PageLayout);

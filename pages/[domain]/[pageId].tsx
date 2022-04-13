@@ -137,13 +137,15 @@ function BlocksEditorPage ({ publicShare = false }: IBlocksEditorPage) {
   return null;
 }
 
-export default BlocksEditorPage;
+const memod = memo(BlocksEditorPage);
 
-BlocksEditorPage.getLayout = (page: ReactElement) => {
-  console.log('GET LAYOUT!');
+memod.getLayout = (page: ReactElement) => {
+  console.log('GET LAYOUT!', page);
   return (
     <PageLayout>
       {page}
     </PageLayout>
   );
 };
+
+export default memod;

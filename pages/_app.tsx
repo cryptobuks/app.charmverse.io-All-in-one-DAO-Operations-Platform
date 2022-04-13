@@ -198,6 +198,7 @@ export default function App ({ Component, pageProps }: AppPropsWithLayout) {
     if (jssStyles?.parentElement) {
       jssStyles.parentElement.removeChild(jssStyles);
     }
+    console.log('[_app] insert styles');
   }, []);
 
   // dark mode: https://mui.com/customization/dark-mode/
@@ -229,6 +230,7 @@ export default function App ({ Component, pageProps }: AppPropsWithLayout) {
   }, [mode]);
 
   useEffect(() => {
+    console.log('[_app] set dark mode');
     if (savedDarkMode) {
       setMode(savedDarkMode);
     }
@@ -242,6 +244,8 @@ export default function App ({ Component, pageProps }: AppPropsWithLayout) {
   if (!router.isReady) {
     return null;
   }
+
+  console.log('render _app.tsx');
 
   return (
     <CacheProvider value={createCache({ key: 'app' })}>
