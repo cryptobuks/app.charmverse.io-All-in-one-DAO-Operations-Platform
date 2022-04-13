@@ -12,6 +12,7 @@ import TreeView from '@mui/lab/TreeView';
 import IconButton from '@mui/material/IconButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Menu from '@mui/material/Menu';
+import MuiLink from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import { Space } from '@prisma/client';
@@ -141,7 +142,7 @@ export const StyledPageIcon = styled(EmojiIcon)`
   }
 `;
 
-export const PageTitle = styled(Typography) <{ isempty?: number }>`
+export const PageTitle = styled(MuiLink) <{ isempty?: number }>`
   color: inherit;
   display: flex;
   align-items: center;

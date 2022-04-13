@@ -151,7 +151,7 @@ import type { NextPage } from 'next';
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { ReactElement, ReactNode, useEffect, useMemo, useState } from 'react';
+import { ReactElement, ReactNode, useEffect, memo, useMemo, useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { TouchBackend } from 'react-dnd-touch-backend';
@@ -183,6 +183,9 @@ type NextPageWithLayout = NextPage & {
 type AppPropsWithLayout = AppProps & {
   Component: NextPageWithLayout
 }
+
+// @ts-ignore - cant figure out the types :(
+const MemoizedBarrier = memo(props => props.children);
 
 export default function App ({ Component, pageProps }: AppPropsWithLayout) {
 
@@ -251,24 +254,26 @@ export default function App ({ Component, pageProps }: AppPropsWithLayout) {
                   <FocalBoardProviders>
                     <DataProviders>
                       <SnackbarProvider>
-                        <TitleContext.Consumer>
-                          {([title]) => (
-                            <Head>
-                              <title>
-                                {title ? `${title} | CharmVerse` : 'CharmVerse - the all-in-one web3 workspace'}
-                              </title>
-                              {/* viewport meta tag goes in _app.tsx - https://nextjs.org/docs/messages/no-document-viewport-meta */}
-                              <meta name='viewport' content='minimum-scale=1, initial-scale=1, width=device-width' />
-                            </Head>
-                          )}
-                        </TitleContext.Consumer>
-                        <CssBaseline enableColorScheme={true} />
-                        <RouteGuard>
-                          <ErrorBoundary>
-                            {getLayout(<Component {...pageProps} />)}
-                            <Snackbar />
-                          </ErrorBoundary>
-                        </RouteGuard>
+                        <MemoizedBarrier>
+                          <TitleContext.Consumer>
+                            {([title]) => (
+                              <Head>
+                                <title>
+                                  {title ? `${title} | CharmVerse` : 'CharmVerse - the all-in-one web3 workspace'}
+                                </title>
+                                {/* viewport meta tag goes in _app.tsx - https://nextjs.org/docs/messages/no-document-viewport-meta */}
+                                <meta name='viewport' content='minimum-scale=1, initial-scale=1, width=device-width' />
+                              </Head>
+                            )}
+                          </TitleContext.Consumer>
+                          <CssBaseline enableColorScheme={true} />
+                          <RouteGuard>
+                            <ErrorBoundary>
+                              {getLayout(<Component {...pageProps} />)}
+                              <Snackbar />
+                            </ErrorBoundary>
+                          </RouteGuard>
+                        </MemoizedBarrier>
                       </SnackbarProvider>
                     </DataProviders>
                   </FocalBoardProviders>

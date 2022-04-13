@@ -8,7 +8,7 @@ import { usePageTitle } from 'hooks/usePageTitle';
 import debouncePromise from 'lib/utilities/debouncePromise';
 import { Page } from 'models';
 import { useRouter } from 'next/router';
-import { ReactElement, useEffect, useMemo, useState, useCallback } from 'react';
+import { ReactElement, useEffect, memo, useMemo, useState, useCallback } from 'react';
 import ErrorPage from 'components/common/errors/ErrorPage';
 import log from 'lib/log';
 import { isTruthy } from 'lib/utilities/types';
@@ -22,7 +22,7 @@ interface IBlocksEditorPage {
   publicShare?: boolean
 }
 
-export default function BlocksEditorPage ({ publicShare = false }: IBlocksEditorPage) {
+function BlocksEditorPage ({ publicShare = false }: IBlocksEditorPage) {
 
   const { currentPageId, setIsEditing, pages, setPages, setCurrentPageId, getPagePermissions } = usePages();
   const router = useRouter();
@@ -137,7 +137,10 @@ export default function BlocksEditorPage ({ publicShare = false }: IBlocksEditor
   return null;
 }
 
+export default BlocksEditorPage;
+
 BlocksEditorPage.getLayout = (page: ReactElement) => {
+  console.log('GET LAYOUT!');
   return (
     <PageLayout>
       {page}

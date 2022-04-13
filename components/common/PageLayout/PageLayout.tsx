@@ -87,9 +87,9 @@ export default function PageLayout ({ children }: { children: React.ReactNode })
     setOpen(true);
   };
 
-  const handleDrawerClose = () => {
+  const handleDrawerClose = React.useCallback(() => {
     setOpen(false);
-  };
+  }, []);
 
   return (
     <>

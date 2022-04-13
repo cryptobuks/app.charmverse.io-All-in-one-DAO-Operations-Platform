@@ -134,13 +134,6 @@ const SidebarHeader = styled.div(({ theme }) => ({
   minHeight: headerHeight
 }));
 
-const SidebarFooter = styled.div`
-  padding: ${({ theme }) => theme.spacing(1)};
-  display: flex;
-  align-items: center;
-  border-top: 1px solid ${({ theme }) => theme.palette.divider};
-`;
-
 const ScrollingContainer = styled.div<{ isScrolled: boolean }>`
   flex-grow: 1;
   overflow-y: auto;
@@ -165,15 +158,11 @@ interface SidebarProps {
 
 export default function Sidebar ({ closeSidebar, favorites }: SidebarProps) {
   const router = useRouter();
-  const [user, setUser] = useUser();
+  const [, setUser] = useUser();
   const [space] = useCurrentSpace();
   const [spaces, setSpaces] = useSpaces();
-  const boards = useAppSelector(getSortedBoards);
-  const { currentPageId, pages, setPages, addPageAndRedirect } = usePages();
   const [spaceFormOpen, setSpaceFormOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const favoritePageIds = favorites.map(f => f.pageId);
-  const intl = useIntl();
 
   function showSpaceForm () {
     setSpaceFormOpen(true);
@@ -195,51 +184,7 @@ export default function Sidebar ({ closeSidebar, favorites }: SidebarProps) {
     setUser(_user);
     router.push(`/${newSpace.domain}`);
   }
-
-  async function deletePage (pageId: string) {
-    const page = pages[pageId];
-    let newPages = { ...pages };
-    delete newPages[pageId];
-    if (page) {
-      await charmClient.deletePage(page.id);
-      if (Object.keys(newPages).length === 0) {
-        const newPage = await charmClient.createPage(untitledPage({
-          userId: user!.id,
-          spaceId: space!.id
-        }));
-        newPages = { [newPage.id]: newPage };
-      }
-    }
-    setPages(newPages);
-    if (page?.boardId) {
-      const board = boards.find(b => b.id === page.boardId);
-      if (board) {
-        mutator.deleteBlock(
-          board,
-          intl.formatMessage({ id: 'Sidebar.delete-board', defaultMessage: 'Delete board' }),
-          async () => {
-            // success
-          },
-          async () => {
-            // error
-          }
-        );
-      }
-    }
-
-    const currentPage = pages[currentPageId];
-    // Redirect from current page
-    if (page && currentPage && page.id === currentPage.id) {
-      let newPath = `/${space!.domain}`;
-      if (currentPage.parentId) {
-        const parent = pages[currentPage.parentId];
-        if (parent) {
-          newPath += `/${parent.path}`;
-        }
-      }
-      router.push(newPath);
-    }
-  }
+  console.log('sidebar draw');
 
   return (
     <SidebarContainer>
@@ -288,43 +233,109 @@ export default function Sidebar ({ closeSidebar, favorites }: SidebarProps) {
             />
           </Box>
           <ScrollingContainer isScrolled={isScrolled} onScroll={onScroll}>
-            {favoritePageIds.length > 0 && (
-            <Box mb={2}>
-              <SectionName>
-                FAVORITES
-              </SectionName>
-              <PageNavigation
-                isFavorites={true}
-                space={space}
-                rootPageIds={favoritePageIds}
-              />
-            </Box>
-            )}
-            <WorkspaceLabel>
-              <SectionName>
-                WORKSPACE
-              </SectionName>
-              <div className='add-a-page'>
-                <NewPageMenu tooltip='Add a page' addPage={page => addPageAndRedirect(page)} />
-              </div>
-            </WorkspaceLabel>
-            <Box sx={{ mb: 6 }}>
-              <PageNavigation
-                space={space}
-                deletePage={deletePage}
-              />
-            </Box>
-            <Box sx={{ mb: 2 }}>
-              <SidebarLink
-                href={`/${space.domain}/bounties`}
-                active={router.pathname.startsWith('/[domain]/bounties')}
-                icon={<BountyIcon fontSize='small' />}
-                label='Bounties'
-              />
-            </Box>
+            <WorkspacePages favorites={favorites} />
           </ScrollingContainer>
         </Box>
       )}
     </SidebarContainer>
+  );
+}
+
+function WorkspacePages ({ favorites }: { favorites: LoggedInUser['favorites'] }) {
+
+  const intl = useIntl();
+  const router = useRouter();
+  const [space] = useCurrentSpace();
+  const [user] = useUser();
+  const boards = useAppSelector(getSortedBoards);
+  const { currentPageId, pages, setPages, addPageAndRedirect } = usePages();
+  const favoritePageIds = favorites.map(f => f.pageId);
+
+  async function deletePage (pageId: string) {
+    const page = pages[pageId];
+    let newPages = { ...pages };
+    delete newPages[pageId];
+    if (page) {
+      await charmClient.deletePage(page.id);
+      if (Object.keys(newPages).length === 0) {
+        const newPage = await charmClient.createPage(untitledPage({
+          userId: user!.id,
+          spaceId: space!.id
+        }));
+        newPages = { [newPage.id]: newPage };
+      }
+    }
+    setPages(newPages);
+    if (page?.boardId) {
+      const board = boards.find(b => b.id === page.boardId);
+      if (board) {
+        mutator.deleteBlock(
+          board,
+          intl.formatMessage({ id: 'Sidebar.delete-board', defaultMessage: 'Delete board' }),
+          async () => {
+            // success
+          },
+          async () => {
+            // error
+          }
+        );
+      }
+    }
+
+    const currentPage = pages[currentPageId];
+    // Redirect from current page
+    if (page && currentPage && page.id === currentPage.id) {
+      let newPath = `/${router.query.domain}`;
+      if (currentPage.parentId) {
+        const parent = pages[currentPage.parentId];
+        if (parent) {
+          newPath += `/${parent.path}`;
+        }
+      }
+      router.push(newPath);
+    }
+  }
+
+  if (!space) {
+    return null;
+  }
+
+  return (
+    <>
+      {favoritePageIds.length > 0 && (
+        <Box mb={2}>
+          <SectionName>
+            FAVORITES
+          </SectionName>
+          <PageNavigation
+            isFavorites={true}
+            space={space}
+            rootPageIds={favoritePageIds}
+          />
+        </Box>
+      )}
+      <WorkspaceLabel>
+        <SectionName>
+          WORKSPACE
+        </SectionName>
+        <div className='add-a-page'>
+          <NewPageMenu tooltip='Add a page' addPage={page => addPageAndRedirect(page)} />
+        </div>
+      </WorkspaceLabel>
+      <Box sx={{ mb: 6 }}>
+        <PageNavigation
+          space={space}
+          deletePage={deletePage}
+        />
+      </Box>
+      <Box sx={{ mb: 2 }}>
+        <SidebarLink
+          href={`/${space.domain}/bounties`}
+          active={router.pathname.startsWith('/[domain]/bounties')}
+          icon={<BountyIcon fontSize='small' />}
+          label='Bounties'
+        />
+      </Box>
+    </>
   );
 }
