@@ -19,7 +19,7 @@ import mutator from '../../mutator'
 import {Utils} from '../../utils'
 
 import GalleryCard from './galleryCard'
-import { cachedDataVersionTag } from 'node:v8';
+import { FixedSizeGrid as Grid } from 'react-window';
 
 // Default sizes help Masonry decide how many images to batch-measure
 const cache = new CellMeasurerCache({
@@ -79,21 +79,52 @@ const Gallery = (props: Props): JSX.Element => {
     const containerRef = React.useRef()
     console.log(cards.length)
     return (
-        // <div className='Gallery'>
-        <div ref={containerRef}>
-            <WindowScroller scrollElement={containerRef.current}>
-                {({ height, scrollTop }) => (
-                    <AutoSizer disableHeight>
-                        {({ width }) => (
-                            <Masonry
-                                autoHeight={true}
-                                cellCount={cards.length}
-                                cellMeasurerCache={cache}
-                                cellPositioner={cellPositioner}
-                                cellRenderer={({index, key, parent, style}) => {
-                                    const card = cards[index];
+        <div className='Gallery'>
+        {/* // https://github.com/bvaughn/react-virtualized/issues/1671
+        // <div ref={containerRef}>
+        //     <WindowScroller scrollElement={containerRef.current}>
+        //         {({ height, scrollTop }) => ( */}
+                    <AutoSizer>
+                        {({ height, width }) => (
+                            <Grid
+                            columnCount={3}
+                            columnWidth={280}
+                            rowHeight={220}
+                                rowCount={cards.length / 3}
+                                // autoHeight={true}
+                                // cellCount={cards.length}
+                                // cellMeasurerCache={cache}
+                                // cellPositioner={cellPositioner}
+                                // cellRenderer={({index, key, parent, style}) => {
+                                //     const card = cards[index];
+                                //     return (
+                                //         <CellMeasurer cache={cache} index={index} key={key} parent={parent}>
+                                //             <GalleryCard
+                                //                 card={card}
+                                //                 board={board}
+                                //                 onClick={props.onCardClicked}
+                                //                 visiblePropertyTemplates={visiblePropertyTemplates}
+                                //                 visibleTitle={visibleTitle}
+                                //                 visibleBadges={visibleBadges}
+                                //                 isSelected={props.selectedCardIds.includes(card.id)}
+                                //                 readonly={props.readonly}
+                                //                 onDrop={onDropToCard}
+                                //                 isManualSort={isManualSort}
+                                //                 style={style}
+                                //             />
+                                //         </CellMeasurer>
+                                //     );
+                                // }}
+                                height={height}
+                                // overscanByPixels={0}
+                                //ref={this._setMasonryRef}
+                                // scrollTop={scrollTop}
+                                width={width}
+                            >
+                                {({columnIndex,  style}) => {
+                                    const card = cards[columnIndex];
                                     return (
-                                        <CellMeasurer cache={cache} index={index} key={key} parent={parent}>
+
                                             <GalleryCard
                                                 card={card}
                                                 board={board}
@@ -107,19 +138,13 @@ const Gallery = (props: Props): JSX.Element => {
                                                 isManualSort={isManualSort}
                                                 style={style}
                                             />
-                                        </CellMeasurer>
                                     );
                                 }}
-                                height={height}
-                                overscanByPixels={0}
-                                //ref={this._setMasonryRef}
-                                scrollTop={scrollTop}
-                                width={width}
-                            />
+                                </Grid>
                         )}
                     </AutoSizer>
-                )}
-            </WindowScroller>
+
+             {/* </WindowScroller> */}
 
             {/* Add New row */}
 
