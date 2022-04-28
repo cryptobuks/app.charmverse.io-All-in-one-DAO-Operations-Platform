@@ -2,6 +2,11 @@
     display: flex;
     flex-wrap: wrap;
     overflow: auto;
+    box-sizing: content-box;
+
+    * {
+        box-sizing: content-box !important;
+    }
 
     .octo-gallery-new {
         border: 1px solid rgba(var(--center-channel-color-rgb), 0.09);

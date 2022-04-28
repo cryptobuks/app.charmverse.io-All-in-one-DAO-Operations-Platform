@@ -3,13 +3,14 @@
 import React from 'react'
 import {FormattedMessage} from 'react-intl'
 import {
-    AutoSizer,
-    CellMeasurer,
-    CellMeasurerCache,
-    createMasonryCellPositioner,
-    Masonry,
+    // AutoSizer,
+    // CellMeasurer,
+    // CellMeasurerCache,
+    // createMasonryCellPositioner,
+    // Masonry,
     WindowScroller,
   } from 'react-virtualized';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {Constants} from '../../constants'
 import {Card} from '../../blocks/card'
@@ -20,7 +21,14 @@ import {Utils} from '../../utils'
 
 import GalleryCard from './galleryCard'
 import { VariableSizeGrid as Grid } from 'react-window';
+import styled from '@emotion/styled';
 
+const StyledGrid = styled(Grid)`
+  box-sizing: content-box;
+  * {
+    box-sizing: content-box;
+  }
+`;
 
 type Props = {
     board: Board
@@ -72,30 +80,33 @@ const Gallery = (props: Props): JSX.Element => {
     // <div className='Gallery'>
 
     function handleScroll ({ scrollTop }: { scrollTop: number }) {
-        console.log('scroll to', scrollTop)
         grid.current?.scrollTo({ scrollTop });
     }
 
-    const colCount = 3;
-
     const [scrollElement, setScrollElement] = React.useState<HTMLDivElement | null>(null)
+
     const sizeMap = React.useRef<Record<number, number>>({});
+
     const setRowHeight = React.useCallback((rowIndex: number, height: number) => {
         const existing = sizeMap.current[rowIndex];
-        //console.log(rowIndex, height, existing)
+        console.log(rowIndex, height, existing)
         if ((sizeMap.current && grid.current) && (!existing || height > existing)) {
             sizeMap.current = { ...sizeMap.current, [rowIndex]: height };
             grid.current.resetAfterRowIndex(rowIndex);
         }
     }, []);
 
-    const getSize = (index: number) => sizeMap.current[index] || 50;
+    const colCount = 3;
+    const columnWidth = 280 + GUTTER_SIZE;
+    const estimatedRowHeight = 200 + GUTTER_SIZE;
 
-    React.useEffect(() => {
-        if (boardRef.current) {
-            setScrollElement(boardRef.current);
-        }
-    }, [boardRef.current])
+    const getSize = (index: number) => {
+        return sizeMap.current[index] || estimatedRowHeight;
+    };
+
+    React.useLayoutEffect(() => {
+        setScrollElement(boardRef.current!);
+    })
 
     if (!scrollElement) {
         return <></>;
@@ -104,93 +115,67 @@ const Gallery = (props: Props): JSX.Element => {
     return (
         <>
         <WindowScroller onScroll={handleScroll} scrollElement={scrollElement}>
-          {() => <div />}
+          {(props) => {
+              console.log('window scroller', props)
+              return <div />
+        }}
         </WindowScroller>
-        {/* // https://github.com/bvaughn/react-virtualized/issues/1671
-        // <div ref={containerRef}>
-        //     <WindowScroller scrollElement={containerRef.current}>
-        //         {({ height, scrollTop }) => ( */}
-        <AutoSizer>
+        <div style={{ boxSizing: 'content-box', minHeight: '100%', paddingBottom: 500 }}>
+        <AutoSizer onResize={props => console.log('onResize', props)}>
             {({ height, width }) => (
-                            <Grid
-                                ref={grid}
-                                columnCount={colCount}
-                                columnWidth={() => 280 + GUTTER_SIZE}
-                                estimatedColumnWidth={280 + GUTTER_SIZE}
-                                estimatedRowHeight={200 + GUTTER_SIZE}
-                                //rowHeight={220 + GUTTER_SIZE}
-                                rowHeight={getSize}
-                                rowCount={Math.ceil(cards.length / colCount)}
-                                innerElementType={innerElementType}
-                                style={{ height: '100% !important' }}
-                                // autoHeight={true}
-                                // cellCount={cards.length}
-                                // cellMeasurerCache={cache}
-                                // cellPositioner={cellPositioner}
-                                // cellRenderer={({index, key, parent, style}) => {
-                                //     const card = cards[index];
-                                //     return (
-                                //         <CellMeasurer cache={cache} index={index} key={key} parent={parent}>
-                                //             <GalleryCard
-                                //                 card={card}
-                                //                 board={board}
-                                //                 onClick={props.onCardClicked}
-                                //                 visiblePropertyTemplates={visiblePropertyTemplates}
-                                //                 visibleTitle={visibleTitle}
-                                //                 visibleBadges={visibleBadges}
-                                //                 isSelected={props.selectedCardIds.includes(card.id)}
-                                //                 readonly={props.readonly}
-                                //                 onDrop={onDropToCard}
-                                //                 isManualSort={isManualSort}
-                                //                 style={style}
-                                //             />
-                                //         </CellMeasurer>
-                                //     );
-                                // }}
-                                height={height}
-                                // overscanByPixels={0}
-                                //ref={this._setMasonryRef}
-                                // scrollTop={scrollTop}
-                                width={width}
-                            >
-                                {({columnIndex, rowIndex,  style}) => {
-                                    const cardIndex = (columnIndex * colCount) + rowIndex;
-                                    const card = cards[cardIndex];
-                                    if (!card) {
-                                        console.log('no card for index', columnIndex, rowIndex, cardIndex)
-                                        return <div style={style}></div>;
-                                    }
-                                    return (
+                <StyledGrid
+                    ref={grid}
+                    columnCount={colCount}
+                    columnWidth={() => columnWidth}
+                    estimatedColumnWidth={columnWidth}
+                    estimatedRowHeight={estimatedRowHeight}
+                    //rowHeight={220 + GUTTER_SIZE}
+                    rowHeight={getSize}
+                    rowCount={Math.floor(cards.length / colCount)}
+                    innerElementType={innerElementType}
+                    height={window.innerHeight}
+                    width={width}
+                    style={{ height: '100% !important' }}
+                >
+                    {({columnIndex, rowIndex,  style}) => {
+                        console.log('autosize height', height)
+                        const cardIndex = (columnIndex * colCount) + rowIndex;
+                        const card = cards[cardIndex];
+                        if (!card) {
+                            return <div style={style}></div>;
+                        }
+                        return (
 
-                                            <GalleryCard
-                                                card={card}
-                                                key={card.id + card.updatedAt}
-                                                board={board}
-                                                onClick={props.onCardClicked}
-                                                visiblePropertyTemplates={visiblePropertyTemplates}
-                                                visibleTitle={visibleTitle}
-                                                visibleBadges={visibleBadges}
-                                                isSelected={props.selectedCardIds.includes(card.id)}
-                                                readonly={props.readonly}
-                                                onDrop={onDropToCard}
-                                                isManualSort={isManualSort}
-                                                rowIndex={rowIndex}
-                                                setRowHeight={setRowHeight}
-                                                style={{
-                                                    ...style,
-                                                    left: style.left as number + GUTTER_SIZE,
-                                                    top: style.top as number + GUTTER_SIZE,
-                                                    width: style.width as number - GUTTER_SIZE,
-                                                    height: style.height as number - GUTTER_SIZE
+                                <GalleryCard
+                                    card={card}
+                                    key={card.id + card.updatedAt}
+                                    board={board}
+                                    onClick={props.onCardClicked}
+                                    visiblePropertyTemplates={visiblePropertyTemplates}
+                                    visibleTitle={visibleTitle}
+                                    visibleBadges={visibleBadges}
+                                    isSelected={props.selectedCardIds.includes(card.id)}
+                                    readonly={props.readonly}
+                                    onDrop={onDropToCard}
+                                    isManualSort={isManualSort}
+                                    rowIndex={rowIndex}
+                                    setRowHeight={setRowHeight}
+                                    style={{
+                                        ...style,
+                                        left: style.left as number + GUTTER_SIZE,
+                                        top: style.top as number + GUTTER_SIZE,
+                                        width: style.width as number - GUTTER_SIZE,
+                                        height: style.height as number - GUTTER_SIZE,
+                                        boxSizing: 'border-box'
 
-                                                }}
-                                            />
-                                    );
-                                }}
-                                </Grid>
+                                    }}
+                                />
+                        );
+                    }}
+                </StyledGrid>
             )}
-                                </AutoSizer>
-             {/* </WindowScroller> */}
+        </AutoSizer>
+        </div>
 
             {/* Add New row */}
 

@@ -317,6 +317,7 @@ function CenterPanel(props: Props) {
   return (
     <div
       className='BoardComponent'
+      // @ts-ignore - couldnt figure out proper types for useRef()
       ref={backgroundRef}
       onClick={(e) => {
         backgroundClicked(e)
