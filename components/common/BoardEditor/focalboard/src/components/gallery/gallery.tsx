@@ -72,15 +72,16 @@ const Gallery = (props: Props): JSX.Element => {
 
     const cellPositioner = createMasonryCellPositioner({
         cellMeasurerCache: cache,
-        columnCount: 4,
+        columnCount: 3,
         columnWidth: 280,
         spacer: 10,
     });
-
-
+    const containerRef = React.useRef()
+    console.log(cards.length)
     return (
-        <div className='Gallery'>
-            <WindowScroller overscanByPixels={0}>
+        // <div className='Gallery'>
+        <div ref={containerRef}>
+            <WindowScroller scrollElement={containerRef.current}>
                 {({ height, scrollTop }) => (
                     <AutoSizer disableHeight>
                         {({ width }) => (
@@ -91,7 +92,6 @@ const Gallery = (props: Props): JSX.Element => {
                                 cellPositioner={cellPositioner}
                                 cellRenderer={({index, key, parent, style}) => {
                                     const card = cards[index];
-                                    console.log(key)
                                     return (
                                         <CellMeasurer cache={cache} index={index} key={key} parent={parent}>
                                             <GalleryCard
