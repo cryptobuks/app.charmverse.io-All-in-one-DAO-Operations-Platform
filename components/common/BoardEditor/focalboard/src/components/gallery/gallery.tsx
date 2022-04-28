@@ -2,6 +2,14 @@
 // See LICENSE.txt for license information.
 import React from 'react'
 import {FormattedMessage} from 'react-intl'
+import {
+    AutoSizer,
+    CellMeasurer,
+    CellMeasurerCache,
+    createMasonryCellPositioner,
+    Masonry,
+    WindowScroller,
+  } from 'react-virtualized';
 
 import {Constants} from '../../constants'
 import {Card} from '../../blocks/card'
@@ -11,6 +19,13 @@ import mutator from '../../mutator'
 import {Utils} from '../../utils'
 
 import GalleryCard from './galleryCard'
+
+// Default sizes help Masonry decide how many images to batch-measure
+const cache = new CellMeasurerCache({
+    defaultHeight: 220,
+    defaultWidth: 280,
+    fixedWidth: true,
+});
 
 type Props = {
     board: Board
@@ -54,29 +69,59 @@ const Gallery = (props: Props): JSX.Element => {
     const visibleTitle = activeView.fields.visiblePropertyIds.includes(Constants.titleColumnId)
     const visibleBadges = activeView.fields.visiblePropertyIds.includes(Constants.badgesColumnId)
 
+    const cellPositioner = createMasonryCellPositioner({
+        cellMeasurerCache: cache,
+        columnCount: cards.length,
+        columnWidth: 280,
+        spacer: 10,
+    });
+
+
     return (
         <div className='Gallery'>
-            {cards.filter((c) => c.parentId === board.id).map((card) => {
-                return (
-                    <GalleryCard
-                        key={card.id + card.updatedAt}
-                        card={card}
-                        board={board}
-                        onClick={props.onCardClicked}
-                        visiblePropertyTemplates={visiblePropertyTemplates}
-                        visibleTitle={visibleTitle}
-                        visibleBadges={visibleBadges}
-                        isSelected={props.selectedCardIds.includes(card.id)}
-                        readonly={props.readonly}
-                        onDrop={onDropToCard}
-                        isManualSort={isManualSort}
-                    />
-                )
-            })}
+            <WindowScroller overscanByPixels={0}>
+                {({ height, isScrolling, registerChild, onChildScroll, scrollTop }) => (
+                    <div style={{ flex: '1 1 auto' }}>
+                    <AutoSizer disableHeight>
+                        {({ width }) => (
+                            <Masonry
+                                autoHeight={true}
+                                cellCount={cards.length}
+                                cellMeasurerCache={cache}
+                                cellPositioner={cellPositioner}
+                                cellRenderer={({index, parent, style}) => {
+                                    const card = cards[index];
+                                    return (
+                                        <GalleryCard
+                                            key={card.id + card.updatedAt}
+                                            card={card}
+                                            board={board}
+                                            onClick={props.onCardClicked}
+                                            visiblePropertyTemplates={visiblePropertyTemplates}
+                                            visibleTitle={visibleTitle}
+                                            visibleBadges={visibleBadges}
+                                            isSelected={props.selectedCardIds.includes(card.id)}
+                                            readonly={props.readonly}
+                                            onDrop={onDropToCard}
+                                            isManualSort={isManualSort}
+                                            style={style}
+                                        />
+                                    );
+                                }}
+                                height={height}
+                                overscanByPixels={0}
+                                //ref={this._setMasonryRef}
+                                scrollTop={scrollTop}
+                                width={width}
+                            />
+                        )}
+                    </AutoSizer></div>
+                )}
+            </WindowScroller>
 
             {/* Add New row */}
 
-            {!props.readonly &&
+            {/* {!props.readonly &&
                 <div
                     className='octo-gallery-new'
                     onClick={() => {
@@ -88,7 +133,7 @@ const Gallery = (props: Props): JSX.Element => {
                         defaultMessage='+ New'
                     />
                 </div>
-            }
+            } */}
         </div>
     )
 }

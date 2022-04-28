@@ -7,8 +7,6 @@ import { Board, IPropertyTemplate } from '../../blocks/board'
 import { Card } from '../../blocks/card'
 import { useSortable } from '../../hooks/sortable'
 import mutator from '../../mutator'
-import { getCardComments } from '../../store/comments'
-import { useAppSelector } from '../../store/hooks'
 import { Utils } from '../../utils'
 import IconButton from '../../widgets/buttons/iconButton'
 import DeleteIcon from '../../widgets/icons/delete'
@@ -26,7 +24,6 @@ import { PageContent } from 'models'
 import { usePages } from 'hooks/usePages'
 import { mutate } from 'swr'
 import { useCurrentSpace } from 'hooks/useCurrentSpace'
-import { getCardContents } from '../../store/contents'
 import PageIcon from 'components/common/PageLayout/components/PageIcon'
 
 
@@ -40,6 +37,7 @@ type Props = {
   visibleBadges: boolean
   readonly: boolean
   isManualSort: boolean
+  style: any
   onDrop: (srcCard: Card, dstCard: Card) => void
 }
 
@@ -50,8 +48,6 @@ const GalleryCard = React.memo((props: Props) => {
   const [space] = useCurrentSpace()
   const intl = useIntl()
   const [isDragging, isOver, cardRef] = useSortable('card', card, props.isManualSort && !props.readonly, props.onDrop)
-  const comments = useAppSelector(getCardComments(card.id))
-  const contents = useAppSelector(getCardContents(card.id))
   const cardPage = pages[card.id]
 
   const visiblePropertyTemplates = props.visiblePropertyTemplates || []
@@ -93,7 +89,7 @@ const GalleryCard = React.memo((props: Props) => {
     <div
       className={className}
       onClick={(e: React.MouseEvent) => props.onClick(e, card)}
-      style={{ opacity: isDragging ? 0.5 : 1 }}
+      style={{ opacity: isDragging ? 0.5 : 1, ...props.style }}
       ref={cardRef}
     >
       {!props.readonly &&

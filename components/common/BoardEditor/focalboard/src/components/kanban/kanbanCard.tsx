@@ -60,9 +60,6 @@ const KanbanCard = React.memo((props: Props) => {
 
   const { bounties } = useBounties()
   const linkedBounty = bounties.find(bounty => bounty.linkedTaskId === card.id);
-
-  const contents = useAppSelector(getCardContents(card.id))
-  const comments = useAppSelector(getCardComments(card.id))
   const { pages, getPagePermissions } = usePages()
   const cardPage = pages[card.id]
 
