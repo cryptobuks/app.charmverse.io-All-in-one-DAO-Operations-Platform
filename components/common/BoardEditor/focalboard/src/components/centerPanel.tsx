@@ -60,7 +60,7 @@ function CenterPanel(props: Props) {
 
   const [space] = useCurrentSpace()
 
-  const backgroundRef = React.createRef<HTMLDivElement>()
+  const backgroundRef = React.useRef<HTMLDivElement>()
   const keydownHandler = (keyName: string, e: KeyboardEvent) => {
     if (e.target !== document.body || props.readonly) {
       return
@@ -400,6 +400,7 @@ function CenterPanel(props: Props) {
         {activeView.fields.viewType === 'gallery' &&
           <Gallery
             board={props.board}
+            boardRef={backgroundRef}
             cards={props.cards}
             activeView={props.activeView}
             readonly={props.readonly}

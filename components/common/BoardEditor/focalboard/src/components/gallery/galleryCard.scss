@@ -8,6 +8,7 @@
     margin-right: 10px;
     margin-bottom: 10px;
     cursor: pointer;
+    min-height: 100%;
 
     // HACK: Fixes Chrome drag and drop preview
     transform: translate3d(0, 0, 0);

@@ -19,27 +19,24 @@ import mutator from '../../mutator'
 import {Utils} from '../../utils'
 
 import GalleryCard from './galleryCard'
-import { FixedSizeGrid as Grid } from 'react-window';
+import { VariableSizeGrid as Grid } from 'react-window';
 
-// Default sizes help Masonry decide how many images to batch-measure
-const cache = new CellMeasurerCache({
-    defaultHeight: 220,
-    defaultWidth: 280,
-    fixedWidth: true,
-});
 
 type Props = {
     board: Board
     cards: Card[]
     activeView: BoardView
+    boardRef: React.MutableRefObject<HTMLDivElement | undefined>
     readonly: boolean
     addCard: (show: boolean) => Promise<void>
     selectedCardIds: string[]
     onCardClicked: (e: React.MouseEvent, card: Card) => void
 }
 
+const GUTTER_SIZE = 10;
+
 const Gallery = (props: Props): JSX.Element => {
-    const {activeView, board, cards} = props
+    const {activeView, board, cards, boardRef} = props
 
     const visiblePropertyTemplates =
         activeView.fields.visiblePropertyIds.map((id) => board.fields.cardProperties.find((t) => t.id === id)).filter((i) => i) as IPropertyTemplate[]
@@ -70,27 +67,62 @@ const Gallery = (props: Props): JSX.Element => {
     const visibleTitle = activeView.fields.visiblePropertyIds.includes(Constants.titleColumnId)
     const visibleBadges = activeView.fields.visiblePropertyIds.includes(Constants.badgesColumnId)
 
-    const cellPositioner = createMasonryCellPositioner({
-        cellMeasurerCache: cache,
-        columnCount: 3,
-        columnWidth: 280,
-        spacer: 10,
-    });
-    const containerRef = React.useRef()
+    const grid = React.useRef<any>(null);
     console.log(cards.length)
+    // <div className='Gallery'>
+
+    function handleScroll ({ scrollTop }: { scrollTop: number }) {
+        console.log('scroll to', scrollTop)
+        grid.current?.scrollTo({ scrollTop });
+    }
+
+    const colCount = 3;
+
+    const [scrollElement, setScrollElement] = React.useState<HTMLDivElement | null>(null)
+    const sizeMap = React.useRef<Record<number, number>>({});
+    const setRowHeight = React.useCallback((rowIndex: number, height: number) => {
+        const existing = sizeMap.current[rowIndex];
+        //console.log(rowIndex, height, existing)
+        if ((sizeMap.current && grid.current) && (!existing || height > existing)) {
+            sizeMap.current = { ...sizeMap.current, [rowIndex]: height };
+            grid.current.resetAfterRowIndex(rowIndex);
+        }
+    }, []);
+
+    const getSize = (index: number) => sizeMap.current[index] || 50;
+
+    React.useEffect(() => {
+        if (boardRef.current) {
+            setScrollElement(boardRef.current);
+        }
+    }, [boardRef.current])
+
+    if (!scrollElement) {
+        return <></>;
+    }
+
     return (
-        <div className='Gallery'>
+        <>
+        <WindowScroller onScroll={handleScroll} scrollElement={scrollElement}>
+          {() => <div />}
+        </WindowScroller>
         {/* // https://github.com/bvaughn/react-virtualized/issues/1671
         // <div ref={containerRef}>
         //     <WindowScroller scrollElement={containerRef.current}>
         //         {({ height, scrollTop }) => ( */}
-                    <AutoSizer>
-                        {({ height, width }) => (
+        <AutoSizer>
+            {({ height, width }) => (
                             <Grid
-                            columnCount={3}
-                            columnWidth={280}
-                            rowHeight={220}
-                                rowCount={cards.length / 3}
+                                ref={grid}
+                                columnCount={colCount}
+                                columnWidth={() => 280 + GUTTER_SIZE}
+                                estimatedColumnWidth={280 + GUTTER_SIZE}
+                                estimatedRowHeight={200 + GUTTER_SIZE}
+                                //rowHeight={220 + GUTTER_SIZE}
+                                rowHeight={getSize}
+                                rowCount={Math.ceil(cards.length / colCount)}
+                                innerElementType={innerElementType}
+                                style={{ height: '100% !important' }}
                                 // autoHeight={true}
                                 // cellCount={cards.length}
                                 // cellMeasurerCache={cache}
@@ -121,12 +153,18 @@ const Gallery = (props: Props): JSX.Element => {
                                 // scrollTop={scrollTop}
                                 width={width}
                             >
-                                {({columnIndex,  style}) => {
-                                    const card = cards[columnIndex];
+                                {({columnIndex, rowIndex,  style}) => {
+                                    const cardIndex = (columnIndex * colCount) + rowIndex;
+                                    const card = cards[cardIndex];
+                                    if (!card) {
+                                        console.log('no card for index', columnIndex, rowIndex, cardIndex)
+                                        return <div style={style}></div>;
+                                    }
                                     return (
 
                                             <GalleryCard
                                                 card={card}
+                                                key={card.id + card.updatedAt}
                                                 board={board}
                                                 onClick={props.onCardClicked}
                                                 visiblePropertyTemplates={visiblePropertyTemplates}
@@ -136,14 +174,22 @@ const Gallery = (props: Props): JSX.Element => {
                                                 readonly={props.readonly}
                                                 onDrop={onDropToCard}
                                                 isManualSort={isManualSort}
-                                                style={style}
+                                                rowIndex={rowIndex}
+                                                setRowHeight={setRowHeight}
+                                                style={{
+                                                    ...style,
+                                                    left: style.left as number + GUTTER_SIZE,
+                                                    top: style.top as number + GUTTER_SIZE,
+                                                    width: style.width as number - GUTTER_SIZE,
+                                                    height: style.height as number - GUTTER_SIZE
+
+                                                }}
                                             />
                                     );
                                 }}
                                 </Grid>
-                        )}
-                    </AutoSizer>
-
+            )}
+                                </AutoSizer>
              {/* </WindowScroller> */}
 
             {/* Add New row */}
@@ -161,8 +207,20 @@ const Gallery = (props: Props): JSX.Element => {
                     />
                 </div>
             } */}
-        </div>
+            </>
     )
 }
+
+const innerElementType = React.forwardRef(({ style, ...rest }: any, ref) => (
+    <div
+      ref={ref}
+      style={{
+        ...style,
+        paddingLeft: GUTTER_SIZE,
+        paddingTop: GUTTER_SIZE
+      }}
+      {...rest}
+    />
+  ));
 
 export default Gallery

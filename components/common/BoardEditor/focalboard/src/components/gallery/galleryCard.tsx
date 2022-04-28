@@ -39,16 +39,20 @@ type Props = {
   isManualSort: boolean
   style: any
   onDrop: (srcCard: Card, dstCard: Card) => void
+  rowIndex: number
+  setRowHeight: (rowIndex: number, size: number) => void
 }
 
 const GalleryCard = React.memo((props: Props) => {
-  const { card, board } = props
+  const { card, board, rowIndex, setRowHeight } = props
 
   const { pages, getPagePermissions } = usePages()
   const [space] = useCurrentSpace()
   const intl = useIntl()
   const [isDragging, isOver, cardRef] = useSortable('card', card, props.isManualSort && !props.readonly, props.onDrop)
   const cardPage = pages[card.id]
+
+  const pagePermissions = getPagePermissions(card.id)
 
   const visiblePropertyTemplates = props.visiblePropertyTemplates || []
 
@@ -83,112 +87,120 @@ const GalleryCard = React.memo((props: Props) => {
     }
   }
 
-  const pagePermissions = getPagePermissions(card.id)
+  React.useEffect(() => {
+    if (cardRef.current) {
+      const box = cardRef.current.getBoundingClientRect();
+      // add 10px for padding
+      setRowHeight(rowIndex, box.height + 10);
+    }
+  }, [setRowHeight, rowIndex]);
 
   return (
-    <div
-      className={className}
-      onClick={(e: React.MouseEvent) => props.onClick(e, card)}
-      style={{ opacity: isDragging ? 0.5 : 1, ...props.style }}
-      ref={cardRef}
-    >
-      {!props.readonly &&
-        <MenuWrapper
-          className='optionsMenu'
-          stopPropagationOnToggle={true}
-        >
-          <IconButton icon={<OptionsIcon />} />
-          <Menu position='left'>
-            {pagePermissions.delete && <Menu.Text
-              icon={<DeleteIcon />}
-              id='delete'
-              name={intl.formatMessage({ id: 'GalleryCard.delete', defaultMessage: 'Delete' })}
-              onClick={() => mutator.deleteBlock(card, 'delete card')}
-            />}
-            <Menu.Text
-              icon={<DuplicateIcon />}
-              id='duplicate'
-              name={intl.formatMessage({ id: 'GalleryCard.duplicate', defaultMessage: 'Duplicate' })}
-              onClick={() => {
-                if (pages[card.id] && space) {
-                  mutator.duplicateCard({
-                    cardId: card.id, board, cardPage: pages[card.id]!,
-                    afterRedo: async () => {
-                      mutate(`pages/${space.id}`)
-                    }
-                  })
-                }
-              }}
-            />
-            <Menu.Text
-              icon={<LinkIcon />}
-              id='copy'
-              name={intl.formatMessage({ id: 'GalleryCard.copyLink', defaultMessage: 'Copy link' })}
-              onClick={() => {
-                let cardLink = window.location.href
-
-                const queryString = new URLSearchParams(window.location.search)
-                if (queryString.get('cardId') !== card.id) {
-                  const newUrl = new URL(window.location.toString())
-                  newUrl.searchParams.set('cardId', card.id)
-                  cardLink = newUrl.toString()
-                }
-
-                Utils.copyTextToClipboard(cardLink)
-                sendFlashMessage({ content: intl.formatMessage({ id: 'GalleryCard.copiedLink', defaultMessage: 'Copied!' }), severity: 'high' })
-              }}
-            />
-          </Menu>
-        </MenuWrapper>
-      }
-      {galleryImageUrl &&
-        <div className='gallery-image'>
-          <img
-            className='ImageElement'
-            src={galleryImageUrl}
-            alt={"Gallery item"}
-          />
-        </div>}
-      {!galleryImageUrl &&
-        <CardDetailProvider card={card}>
-          <div className='gallery-item' />
-        </CardDetailProvider>}
-      {props.visibleTitle &&
-        <div className='gallery-title'>
-          {cardPage?.icon ? <PageIcon isEditorEmpty={false} pageType="card" icon={cardPage.icon} /> : undefined}
-          <div key='__title'>
-            {cardPage?.title ||
-              <FormattedMessage
-                id='KanbanCard.untitled'
-                defaultMessage='Untitled'
+    <div style={props.style}>
+      <div
+        className={className}
+        onClick={(e: React.MouseEvent) => props.onClick(e, card)}
+        style={{ opacity: isDragging ? 0.5 : 1 }}
+        ref={cardRef}
+      >
+        {!props.readonly &&
+          <MenuWrapper
+            className='optionsMenu'
+            stopPropagationOnToggle={true}
+          >
+            <IconButton icon={<OptionsIcon />} />
+            <Menu position='left'>
+              {pagePermissions.delete && <Menu.Text
+                icon={<DeleteIcon />}
+                id='delete'
+                name={intl.formatMessage({ id: 'GalleryCard.delete', defaultMessage: 'Delete' })}
+                onClick={() => mutator.deleteBlock(card, 'delete card')}
               />}
-          </div>
-        </div>}
-      {visiblePropertyTemplates.length > 0 &&
-        <div className='gallery-props'>
-          {visiblePropertyTemplates.map((template) => (
-            <Tooltip
-              key={template.id}
-              title={template.name}
-              placement='top'
-            >
-              <PropertyValueElement
-                updatedAt={cardPage?.updatedAt.toString() || ''}
-                updatedBy={cardPage?.updatedBy || ''}
-                board={board}
-                readOnly={true}
-                card={card}
-                propertyTemplate={template}
-                showEmptyPlaceholder={false}
+              <Menu.Text
+                icon={<DuplicateIcon />}
+                id='duplicate'
+                name={intl.formatMessage({ id: 'GalleryCard.duplicate', defaultMessage: 'Duplicate' })}
+                onClick={() => {
+                  if (pages[card.id] && space) {
+                    mutator.duplicateCard({
+                      cardId: card.id, board, cardPage: pages[card.id]!,
+                      afterRedo: async () => {
+                        mutate(`pages/${space.id}`)
+                      }
+                    })
+                  }
+                }}
               />
-            </Tooltip>
-          ))}
-        </div>}
-      {props.visibleBadges &&
-        <CardBadges
-          card={card}
-          className='gallery-badges'
-        />}
+              <Menu.Text
+                icon={<LinkIcon />}
+                id='copy'
+                name={intl.formatMessage({ id: 'GalleryCard.copyLink', defaultMessage: 'Copy link' })}
+                onClick={() => {
+                  let cardLink = window.location.href
+
+                  const queryString = new URLSearchParams(window.location.search)
+                  if (queryString.get('cardId') !== card.id) {
+                    const newUrl = new URL(window.location.toString())
+                    newUrl.searchParams.set('cardId', card.id)
+                    cardLink = newUrl.toString()
+                  }
+
+                  Utils.copyTextToClipboard(cardLink)
+                  sendFlashMessage({ content: intl.formatMessage({ id: 'GalleryCard.copiedLink', defaultMessage: 'Copied!' }), severity: 'high' })
+                }}
+              />
+            </Menu>
+          </MenuWrapper>
+        }
+        {galleryImageUrl &&
+          <div className='gallery-image'>
+            <img
+              className='ImageElement'
+              src={galleryImageUrl}
+              alt={"Gallery item"}
+            />
+          </div>}
+        {!galleryImageUrl &&
+          <CardDetailProvider card={card}>
+            <div className='gallery-item' />
+          </CardDetailProvider>}
+        {props.visibleTitle &&
+          <div className='gallery-title'>
+            {cardPage?.icon ? <PageIcon isEditorEmpty={false} pageType="card" icon={cardPage.icon} /> : undefined}
+            <div key='__title'>
+              {cardPage?.title ||
+                <FormattedMessage
+                  id='KanbanCard.untitled'
+                  defaultMessage='Untitled'
+                />}
+            </div>
+          </div>}
+        {visiblePropertyTemplates.length > 0 &&
+          <div className='gallery-props'>
+            {visiblePropertyTemplates.map((template) => (
+              <Tooltip
+                key={template.id}
+                title={template.name}
+                placement='top'
+              >
+                <PropertyValueElement
+                  updatedAt={cardPage?.updatedAt.toString() || ''}
+                  updatedBy={cardPage?.updatedBy || ''}
+                  board={board}
+                  readOnly={true}
+                  card={card}
+                  propertyTemplate={template}
+                  showEmptyPlaceholder={false}
+                />
+              </Tooltip>
+            ))}
+          </div>}
+        {props.visibleBadges &&
+          <CardBadges
+            card={card}
+            className='gallery-badges'
+          />}
+      </div>
     </div>
   )
 })
