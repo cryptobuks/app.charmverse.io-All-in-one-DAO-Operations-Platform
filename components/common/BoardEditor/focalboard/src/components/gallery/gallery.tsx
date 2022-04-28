@@ -19,6 +19,7 @@ import mutator from '../../mutator'
 import {Utils} from '../../utils'
 
 import GalleryCard from './galleryCard'
+import { cachedDataVersionTag } from 'node:v8';
 
 // Default sizes help Masonry decide how many images to batch-measure
 const cache = new CellMeasurerCache({
@@ -71,7 +72,7 @@ const Gallery = (props: Props): JSX.Element => {
 
     const cellPositioner = createMasonryCellPositioner({
         cellMeasurerCache: cache,
-        columnCount: cards.length,
+        columnCount: 4,
         columnWidth: 280,
         spacer: 10,
     });
@@ -80,8 +81,7 @@ const Gallery = (props: Props): JSX.Element => {
     return (
         <div className='Gallery'>
             <WindowScroller overscanByPixels={0}>
-                {({ height, isScrolling, registerChild, onChildScroll, scrollTop }) => (
-                    <div style={{ flex: '1 1 auto' }}>
+                {({ height, scrollTop }) => (
                     <AutoSizer disableHeight>
                         {({ width }) => (
                             <Masonry
@@ -89,23 +89,25 @@ const Gallery = (props: Props): JSX.Element => {
                                 cellCount={cards.length}
                                 cellMeasurerCache={cache}
                                 cellPositioner={cellPositioner}
-                                cellRenderer={({index, parent, style}) => {
+                                cellRenderer={({index, key, parent, style}) => {
                                     const card = cards[index];
+                                    console.log(key)
                                     return (
-                                        <GalleryCard
-                                            key={card.id + card.updatedAt}
-                                            card={card}
-                                            board={board}
-                                            onClick={props.onCardClicked}
-                                            visiblePropertyTemplates={visiblePropertyTemplates}
-                                            visibleTitle={visibleTitle}
-                                            visibleBadges={visibleBadges}
-                                            isSelected={props.selectedCardIds.includes(card.id)}
-                                            readonly={props.readonly}
-                                            onDrop={onDropToCard}
-                                            isManualSort={isManualSort}
-                                            style={style}
-                                        />
+                                        <CellMeasurer cache={cache} index={index} key={key} parent={parent}>
+                                            <GalleryCard
+                                                card={card}
+                                                board={board}
+                                                onClick={props.onCardClicked}
+                                                visiblePropertyTemplates={visiblePropertyTemplates}
+                                                visibleTitle={visibleTitle}
+                                                visibleBadges={visibleBadges}
+                                                isSelected={props.selectedCardIds.includes(card.id)}
+                                                readonly={props.readonly}
+                                                onDrop={onDropToCard}
+                                                isManualSort={isManualSort}
+                                                style={style}
+                                            />
+                                        </CellMeasurer>
                                     );
                                 }}
                                 height={height}
@@ -115,7 +117,7 @@ const Gallery = (props: Props): JSX.Element => {
                                 width={width}
                             />
                         )}
-                    </AutoSizer></div>
+                    </AutoSizer>
                 )}
             </WindowScroller>
 
