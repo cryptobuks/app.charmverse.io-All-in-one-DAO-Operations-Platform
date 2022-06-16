@@ -20,6 +20,10 @@ const esmModules = [
 ];
 
 const config = {
+  generateBuildId: async () => {
+    // You can, for example, get the latest git commit hash here
+    return 'my-build-id';
+  },
   generateEtags: false,
   poweredByHeader: false,
   webpack5: true,

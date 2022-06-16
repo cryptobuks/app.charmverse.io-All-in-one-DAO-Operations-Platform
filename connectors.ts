@@ -162,6 +162,7 @@ const RPC = {
     },
     rpcUrls: ['https://api.harmony.one'],
     blockExplorerUrls: ['https://explorer.harmony.one'],
+    gnosisUrl: 'https://multisig.t.hmny.io',
     iconUrl: '/images/cryptoLogos/harmony-one-logo.svg'
   },
   HARMONY_DEVNET: {
@@ -177,6 +178,23 @@ const RPC = {
     },
     rpcUrls: ['https://api.s0.ps.hmny.io'],
     blockExplorerUrls: ['https://explorer.ps.hmny.io/'],
+    gnosisUrl: 'https://multisig.d.hmny.io',
+    iconUrl: '/images/cryptoLogos/harmony-one-logo.svg'
+  },
+  HARMONY_TESTNET: {
+    chainId: 1666700000,
+    chainName: 'Harmony - Testnet',
+    nativeCurrency: {
+      name: 'Harmony',
+      symbol: 'ONE',
+      decimals: 18,
+      address: '0x0000000000000000000000000000000000000000',
+      logoURI:
+        'https://assets.coingecko.com/coins/images/4344/small/Y88JAze.png?1565065793'
+    },
+    rpcUrls: ['https://api.s0.b.hmny.io'],
+    blockExplorerUrls: ['https://explorer.pops.one/'],
+    gnosisUrl: 'https://multisig-staging.hmny.io',
     iconUrl: '/images/cryptoLogos/harmony-one-logo.svg'
   },
   GOERLI: {
@@ -287,6 +305,7 @@ const supportedChains: Blockchain[] = [
   'CELO',
   'HARMONY',
   'HARMONY_DEVNET',
+  'HARMONY_TESTNET',
   'BSC',
   'GOERLI',
   'RINKEBY',

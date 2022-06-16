@@ -8,7 +8,7 @@ import log from 'lib/log';
 
 export type GnosisTransaction = SafeMultisigTransactionResponse;// AllTransactionsListResponse['results'][0];
 
-function getGnosisRPCUrl (chainId: number) {
+export function getGnosisRPCUrl (chainId: number) {
   return getChainById(chainId)?.gnosisUrl;
 }
 
@@ -18,7 +18,7 @@ interface GetGnosisServiceProps {
   serviceUrl?: string;
 }
 
-function getGnosisService ({ signer, chainId, serviceUrl }: GetGnosisServiceProps): SafeServiceClient | null {
+export function getGnosisService ({ signer, chainId, serviceUrl }: GetGnosisServiceProps): SafeServiceClient | null {
 
   const txServiceUrl = serviceUrl || (chainId && getGnosisRPCUrl(chainId));
   if (!txServiceUrl) {
