@@ -107,36 +107,36 @@ function Editor ({ page, setPage, readOnly = false }: IEditorProps) {
               setPage={setPage}
             />
             {card && board && (
-            <div className='CardDetail content'>
-              {/* Property list */}
-              <Box sx={{
-                display: 'flex',
-                gap: 1,
-                justifyContent: 'space-between',
-                width: '100%'
-              }}
-              >
-                <CardDetailProperties
-                  board={board}
-                  card={card}
-                  cards={cards}
-                  activeView={activeView}
-                  views={boardViews}
-                  readonly={readOnly}
-                  pageUpdatedAt={page.updatedAt.toString()}
-                  pageUpdatedBy={page.updatedBy}
-                />
-                <BountyIntegration linkedTaskId={card.id} title={page.title} readonly={readOnly} />
-              </Box>
+              <div className='CardDetail content'>
+                {/* Property list */}
+                <Box sx={{
+                  display: 'flex',
+                  gap: 1,
+                  justifyContent: 'space-between',
+                  width: '100%'
+                }}
+                >
+                  <CardDetailProperties
+                    board={board}
+                    card={card}
+                    cards={cards}
+                    activeView={activeView}
+                    views={boardViews}
+                    readonly={readOnly}
+                    pageUpdatedAt={page.updatedAt.toString()}
+                    pageUpdatedBy={page.updatedBy}
+                  />
+                  <BountyIntegration linkedTaskId={card.id} title={page.title} readonly={readOnly} />
+                </Box>
 
-              <hr />
-              <CommentsList
-                comments={comments}
-                rootId={card.rootId}
-                cardId={card.id}
-                readonly={readOnly}
-              />
-            </div>
+                <hr />
+                <CommentsList
+                  comments={comments}
+                  rootId={card.rootId}
+                  cardId={card.id}
+                  readonly={readOnly}
+                />
+              </div>
             )}
           </CharmEditor>
         </Container>

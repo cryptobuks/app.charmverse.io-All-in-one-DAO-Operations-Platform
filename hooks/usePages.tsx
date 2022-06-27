@@ -1,4 +1,4 @@
-import { Page, PageOperations, Role } from '@prisma/client';
+import { Page, PageOperations, Role, Prisma } from '@prisma/client';
 import charmClient from 'charmClient';
 import { IPageWithPermissions } from 'lib/pages';
 import { IPagePermissionFlags, PageOperationType } from 'lib/permissions/pages';
@@ -20,14 +20,15 @@ export type LinkedPage = (Page & {children: LinkedPage[], parent: null | LinkedP
 export type PagesMap = Record<string, IPageWithPermissions | undefined>;
 
 type IContext = {
-  currentPageId: string,
-  pages: PagesMap,
-  setPages: Dispatch<SetStateAction<PagesMap>>,
-  setCurrentPageId: Dispatch<SetStateAction<string>>,
-  isEditing: boolean
-  refreshPage: (pageId: string) => Promise<IPageWithPermissions>
-  setIsEditing: React.Dispatch<React.SetStateAction<boolean>>
-  getPagePermissions: (pageId: string, page?: IPageWithPermissions) => IPagePermissionFlags,
+  currentPageId: string;
+  pages: PagesMap;
+  setPages: Dispatch<SetStateAction<PagesMap>>;
+  setCurrentPageId: Dispatch<SetStateAction<string>>;
+  isEditing: boolean;
+  setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
+  getPagePermissions: (pageId: string, page?: IPageWithPermissions) => IPagePermissionFlags;
+  refreshPage: (pageId: string) => Promise<IPageWithPermissions>;
+  updatePage: (updates: Prisma.PageUpdateInput) => Promise<IPageWithPermissions>;
 };
 
 const refreshInterval = 1000 * 5 * 60; // 5 minutes
@@ -40,7 +41,8 @@ export const PagesContext = createContext<Readonly<IContext>>({
   isEditing: true,
   setIsEditing: () => { },
   getPagePermissions: () => new AllowedPagePermissions(),
-  refreshPage: () => Promise.resolve({} as any)
+  refreshPage: () => Promise.resolve({} as any),
+  updatePage: () => Promise.resolve({} as any)
 });
 
 export function PagesProvider ({ children }: { children: ReactNode }) {
@@ -122,6 +124,21 @@ export function PagesProvider ({ children }: { children: ReactNode }) {
     return freshPageVersion;
   }
 
+  async function updatePage (updates: Prisma.PageUpdateInput): Promise<IPageWithPermissions> {
+    const updated = await charmClient.updatePage(updates);
+    const current = pagesRef.current[updated.id];
+    if (current && (current.version < updated.version)) {
+      _setPages(_pages => ({
+        ..._pages,
+        [updated.id]: updated
+      }));
+      return updated;
+    }
+    else {
+      return current || updated;
+    }
+  }
+
   const value: IContext = useMemo(() => ({
     currentPageId,
     isEditing,
@@ -130,7 +147,8 @@ export function PagesProvider ({ children }: { children: ReactNode }) {
     setCurrentPageId,
     setPages: _setPages,
     getPagePermissions,
-    refreshPage
+    refreshPage,
+    updatePage
   }), [currentPageId, isEditing, router, pages, user]);
 
   useEffect(() => {

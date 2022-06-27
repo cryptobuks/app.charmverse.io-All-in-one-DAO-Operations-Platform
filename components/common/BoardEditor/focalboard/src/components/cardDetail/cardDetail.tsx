@@ -27,10 +27,10 @@ const CardDetail = (props: Props): JSX.Element|null => {
       }
     }, [])
 
-    const { pages, setPages } = usePages();
+    const { pages, setPages, updatePage } = usePages();
 
     const debouncedPageUpdate = debouncePromise(async (updates: Prisma.PageUpdateInput) => {
-        const updatedPage = await charmClient.updatePage(updates);
+        const updatedPage = await updatePage(updates);
         setPages((_pages) => ({
           ..._pages,
           [card.id]: updatedPage
