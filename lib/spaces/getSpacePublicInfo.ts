@@ -7,28 +7,20 @@ import { PublicSpaceInfo } from './interfaces';
  * For now, it is acceptable to return the entire space document to unauthenticated users
  * Supports lookup by space ID or space domain
  */
-export async function getSpacePublicInfo (spaceIdOrDomainOrPageId: string): Promise<Space | null> {
+export async function getSpacePublicInfo (spaceIdOrDomain: string): Promise<Space | null> {
 
-  if (validate(spaceIdOrDomainOrPageId) === false) {
+  if (validate(spaceIdOrDomain) === false) {
     return prisma.space.findUnique({
       where: {
         // Not a valid UUID, lookup by domain
-        domain: spaceIdOrDomainOrPageId
+        domain: spaceIdOrDomain
       }
     });
   }
 
-  return prisma.space.findFirst({
+  return prisma.space.findUnique({
     where: {
-      OR: [{
-        id: spaceIdOrDomainOrPageId
-      }, {
-        pages: {
-          some: {
-            id: spaceIdOrDomainOrPageId
-          }
-        }
-      }]
+      id: spaceIdOrDomain
     }
   });
 

@@ -3,7 +3,6 @@ import styled from '@emotion/styled';
 import MoonIcon from '@mui/icons-material/DarkMode';
 import SunIcon from '@mui/icons-material/WbSunny';
 import { Box, IconButton, Tooltip } from '@mui/material';
-import { Space } from '@prisma/client';
 import { useWeb3React } from '@web3-react/core';
 import charmClient from 'charmClient';
 import { updateBoards } from 'components/common/BoardEditor/focalboard/src/store/boards';
@@ -26,11 +25,10 @@ import { usePages } from 'hooks/usePages';
 import { usePageTitle } from 'hooks/usePageTitle';
 import { useSpaces } from 'hooks/useSpaces';
 import { useUser } from 'hooks/useUser';
-import { findParentOfType } from 'lib/pages/findParentOfType';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { validate } from 'uuid';
+import { findParentOfType } from 'lib/pages/findParentOfType';
 import PublicBountiesPage from './PublicBountiesPage';
 
 const LayoutContainer = styled.div`
@@ -60,26 +58,20 @@ export default function PublicPage () {
 
   async function onLoad () {
 
-    const spaceDomain = (router.query.pageId as string[])[0];
-
-    let foundSpace: Space | null = null;
-
-    try {
-      foundSpace = await charmClient.getPublicSpaceInfo(spaceDomain);
-      setSpaces([foundSpace]);
-    }
-    catch (err) {
-      setPageNotFound(true);
-    }
-
-    if (!isBountiesPage && foundSpace) {
+    if (isBountiesPage) {
+      // The other part of this logic for setting current space is in hooks/useCurrentSpace
+      const spaceDomain = (router.query.pageId as string[])[0];
       try {
-
+        const space = await charmClient.getPublicSpaceInfo(spaceDomain);
+        setSpaces([space]);
+      }
+      catch (err) {
+        setPageNotFound(true);
+      }
+    }
+    else {
+      try {
         const { page: rootPage, cards, boards, space, views } = await charmClient.getPublicPage(pageIdOrPath);
-
-        if (validate(router.query.pageId?.[0] || '')) {
-          router.replace(`/share/${foundSpace.domain}/${rootPage.path}`);
-        }
 
         setTitleState(rootPage.title);
         setCurrentPageId(rootPage.id);
@@ -167,7 +159,7 @@ export default function PublicPage () {
               width: '100%'
             }}
             >
-              <PageTitleWithBreadcrumbs pageId={basePageId} />
+              <PageTitleWithBreadcrumbs />
               <Box display='flex' alignItems='center'>
                 {/** dark mode toggle */}
                 <Tooltip title={theme.palette.mode === 'dark' ? 'Light mode' : 'Dark mode'} arrow placement='top'>
