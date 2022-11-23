@@ -253,6 +253,7 @@ export class WebSocketConnector {
     const message = this.initialMessage();
     this.oldMessages = this.messagesToSend;
     this.messagesToSend = [];
+    this.connectionCount += 1;
     this.messages = {
       server: 0,
       client: 0,
@@ -263,7 +264,6 @@ export class WebSocketConnector {
   }
 
   subscribed () {
-    this.connectionCount += 1;
     if (this.connectionCount > 1) {
       this.resubscribed();
       while (this.oldMessages.length > 0) {

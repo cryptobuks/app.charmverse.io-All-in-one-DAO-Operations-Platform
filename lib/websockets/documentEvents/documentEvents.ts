@@ -14,7 +14,7 @@ import type { AuthenticatedSocketData } from '../authentication';
 
 import type { Participant, ProsemirrorJSONStep, WrappedSocketMessage, ClientMessage, ServerDocDataMessage, ClientCheckVersionMessage, ClientDiffMessage, ClientSelectionMessage, ServerMessage } from './interfaces';
 
-const log = getLogger('ws-docs');
+const log = getLogger('ws/ceditor');
 
 type SocketSessionData = AuthenticatedSocketData & {
   documentId?: string;

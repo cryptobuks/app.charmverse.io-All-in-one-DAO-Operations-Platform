@@ -133,6 +133,7 @@ export class FidusEditor {
       onError,
       resubscribed: () => {
         resubscribed = true;
+        // console.log('resubscribed');
         if (this.mod.collab) {
           this.mod.collab.doc.awaitingDiffResponse = true; // wait sending diffs till the version is confirmed
         }
@@ -146,8 +147,9 @@ export class FidusEditor {
           case 'connections': {
             // define .sessionIds on each participant
             const participants = this.mod.collab.updateParticipantList(data.participant_list);
-            if (resubscribed) { // check version if only reconnected after being offline
+            if (resubscribed) { // check version if only reconnected after being offline or being in readOnly mode
               this.mod.collab.doc.checkVersion(); // check version to sync the doc
+              this.ws?.send(() => ({ type: 'get_document' })); // get the latest document, because suggestions may have been removed in readOnly mode
               resubscribed = false;
             }
             this.onParticipantUpdate(participants);
@@ -203,35 +205,7 @@ export class FidusEditor {
             break;
         }
       }
-      // failedAuth: () => {
-      //   if (this.view.state.plugins.length && sendableSteps(this.view.state) && this.ws.connectionCount > 0) {
-      //     this.ws.online = false; // To avoid Websocket trying to reconnect.
-      //     new ExportFidusFile(
-      //       this.getDoc({ use_current_view: true }),
-      //       this.mod.db.bibDB,
-      //       this.mod.db.imageDB
-      //     );
-      //     const sessionDialog = new Dialog({
-      //       title: gettext('Session Expired'),
-      //       id: 'session_expiration_dialog',
-      //       body: gettext('Your session expired while you were offline, so we cannot save your work to the server any longer, and it is downloaded to your computer instead. Please consider importing it into a new document.'),
-      //       buttons: [{
-      //         text: gettext('Proceed to Login page'),
-      //         classes: 'fw-dark',
-      //         click: () => {
-      //           window.location.href = '/';
-      //         }
-      //       }],
-      //       canClose: false
-      //     });
-      //     sessionDialog.open();
-      //   }
-      //   else {
-      //     window.location.href = '/';
-      //   }
-      // }
     });
-    log.debug('enabled ws');
 
     this.initEditor(view);
 

@@ -165,29 +165,34 @@ function ResizableIframe ({ readOnly, node, getPos, view, updateAttrs, onResizeS
 
   // If there are no source for the node, return the image select component
   if (!node.attrs.src) {
-    return readOnly ? <EmptyIframeContainer type={node.attrs.type} readOnly={readOnly} /> : (
-      <IFrameSelector
-        autoOpen={autoOpen}
-        type={node.attrs.type}
-        onIFrameSelect={(videoLink) => {
-          const tweetAttrs = extractTweetAttrs(videoLink);
-          if (tweetAttrs) {
-            const pos = getPos();
-            const tweetNode = view.state.schema.nodes.tweet.createAndFill(tweetAttrs);
-            view.dispatch(view.state.tr.replaceWith(pos, pos + node.nodeSize, tweetNode));
-          }
-          else {
-            const attrs = extractEmbedLink(videoLink);
-            updateAttrs({
-              src: attrs.url,
-              type: attrs.type
-            });
-          }
-        }}
-      >
-        <EmptyIframeContainer type={node.attrs.type} readOnly={readOnly} />
-      </IFrameSelector>
-    );
+    if (readOnly) {
+      return null;
+    }
+    else {
+      return (
+        <IFrameSelector
+          autoOpen={autoOpen}
+          type={node.attrs.type}
+          onIFrameSelect={(videoLink) => {
+            const tweetAttrs = extractTweetAttrs(videoLink);
+            if (tweetAttrs) {
+              const pos = getPos();
+              const tweetNode = view.state.schema.nodes.tweet.createAndFill(tweetAttrs);
+              view.dispatch(view.state.tr.replaceWith(pos, pos + node.nodeSize, tweetNode));
+            }
+            else {
+              const attrs = extractEmbedLink(videoLink);
+              updateAttrs({
+                src: attrs.url,
+                type: attrs.type
+              });
+            }
+          }}
+        >
+          <EmptyIframeContainer type={node.attrs.type} readOnly={readOnly} />
+        </IFrameSelector>
+      );
+    }
   }
 
   function onDelete () {

@@ -132,9 +132,6 @@ export function charmEditorPlugins (
     trackPlugins({ onSelectionSet, key: suggestionsPluginKey }),
     new Plugin({
       view: (_view) => {
-        if (readOnly) {
-          rejectAll(_view);
-        }
         return {
           update: (view, prevState) => {
             if (
@@ -489,12 +486,6 @@ function CharmEditor (
     };
   }, [editorRef.current]);
 
-  useEffect(() => {
-
-    const plugins = getPlugins();
-
-  }, [readOnly, enableVoting, pageId, currentSpace?.id, user?.id]);
-
   return (
     <StyledReactBangleEditor
       pageId={pageId}
@@ -510,7 +501,6 @@ function CharmEditor (
       }}
       editorRef={editorRef}
       pmViewOpts={{
-        editable: () => !readOnly,
         plugins: []
       }}
       state={state}

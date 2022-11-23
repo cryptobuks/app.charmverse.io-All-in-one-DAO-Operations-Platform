@@ -146,7 +146,7 @@ function ResizableImage ({ readOnly = false, onResizeStop, node, updateAttrs, se
   // If there are no source for the node, return the image select component
   if (!imageSource) {
     if (readOnly) {
-      return <EmptyImageContainer readOnly={readOnly} isSelected={selected} />;
+      return null;
     }
     else {
       return (

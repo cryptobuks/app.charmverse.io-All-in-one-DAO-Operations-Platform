@@ -23,6 +23,7 @@ import log from 'lib/log';
 import { isTouchScreen } from 'lib/utilities/browser';
 
 import { FidusEditor } from '../../fiduswriter/fiduseditor';
+import { rejectAll } from '../../fiduswriter/track/rejectAll';
 
 import { NodeViewWrapper } from './NodeViewWrapper';
 import type { RenderNodeViewsFunction } from './NodeViewWrapper';
@@ -67,13 +68,14 @@ export const BangleEditor = React.forwardRef<
     const enableFidusEditor = Boolean(user && pageId && trackChanges);
     const [isLoading, setIsLoading] = useState(enableFidusEditor);
     const isLoadingRef = useRef(enableFidusEditor);
+    const isReadonlyRef = useRef(readOnly);
 
     const useSockets = user && pageId && trackChanges && !readOnly;
 
     const { data: authResponse } = useSWRImmutable(useSockets ? user?.id : null, () => charmClient.socket()); // refresh when user
 
     pmViewOpts ||= {};
-    pmViewOpts.editable = () => !isLoadingRef.current;
+    pmViewOpts.editable = () => !isLoadingRef.current && !isReadonlyRef.current;
 
     const editorViewPayloadRef = useRef({
       state,
@@ -81,16 +83,21 @@ export const BangleEditor = React.forwardRef<
       pmViewOpts,
       enableSuggestions
     });
+
     const [editor, setEditor] = useState<CoreBangleEditor>();
     const nodeViews = useNodeViews(renderRef);
     const { showMessage } = useSnackbar();
 
     if (enableSuggestions && !trackChanges) {
-      log.error('CharmEditor: Suggestions require trackChanges to be enabled');
+      log.error('CharmEditor: Suggestions requires trackChanges to be enabled');
     }
 
     // set current
     editorViewPayloadRef.current.enableSuggestions = enableSuggestions;
+
+    useEffect(() => {
+      isReadonlyRef.current = readOnly;
+    }, [readOnly]);
 
     useImperativeHandle(
       ref,
@@ -109,52 +116,64 @@ export const BangleEditor = React.forwardRef<
         renderRef.current!,
         editorViewPayloadRef.current
       );
-      let fEditor: FidusEditor;
+      (_editor.view as any)._updatePluginWatcher = updatePluginWatcher(_editor);
+      setEditor(_editor);
+      return () => {
+        // console.log('destroy editor');
+        _editor.destroy();
+      };
+    }, [ref]);
 
-      if (useSockets) {
-        if (authResponse) {
-          log.info('Init FidusEditor');
-          fEditor = new FidusEditor({
-            user,
-            docId: pageId,
-            enableSuggestionMode: enableSuggestions,
-            onDocLoaded: () => {
-              setIsLoading(false);
-              isLoadingRef.current = false;
-            // console.log('set is loading false');
-            },
-            onParticipantUpdate
-          });
-          fEditor.init(_editor.view, authResponse.authToken, onError);
+    useEffect(() => {
+
+      let fEditor: FidusEditor;
+      if (editor && user && pageId) {
+        if (editor.destroyed) {
+          return;
         }
-      }
-      else if (pageId && readOnly) {
-        charmClient.pages.getPageDetails(pageId)
-          .then((page) => {
-            if (_editor) {
+        // console.log('update plugin state', useSockets, enableSuggestions, readOnly);
+
+        if (useSockets) {
+          if (authResponse) {
+            log.info('Init FidusEditor');
+            fEditor = new FidusEditor({
+              user,
+              docId: pageId,
+              enableSuggestionMode: editorViewPayloadRef.current.enableSuggestions,
+              onDocLoaded: () => {
+                setIsLoading(false);
+                isLoadingRef.current = false;
+                // console.log('set is loading false');
+              },
+              onParticipantUpdate
+            });
+            fEditor.init(editor.view, authResponse.authToken, onError);
+          }
+        }
+        else if (pageId && readOnly) {
+          charmClient.pages.getPageDetails(pageId)
+            .then((page) => {
               setIsLoading(false);
               isLoadingRef.current = false;
-              const schema = _editor.view.state.schema;
+              const schema = editor.view.state.schema;
               const doc = schema.nodeFromJSON(page.content);
 
               const stateConfig = {
                 schema,
                 doc,
-                plugins: _editor.view.state.plugins
+                plugins: editor.view.state.plugins
               };
-              // Set document in prosemirror
-              _editor.view.setProps({ state: EditorState.create(stateConfig) });
-            }
-          });
-
+                // Set document in prosemirror
+              editor.view.setProps({ state: EditorState.create(stateConfig) });
+              rejectAll(editor.view);
+            });
+        }
       }
-      (_editor.view as any)._updatePluginWatcher = updatePluginWatcher(_editor);
-      setEditor(_editor);
       return () => {
+        // console.log('destroy editor plugins');
         fEditor?.close();
-        _editor.destroy();
       };
-    }, [user, pageId, useSockets, authResponse, authResponse, ref]);
+    }, [editor, authResponse, user, state.pmState, pageId, useSockets, enableSuggestions, readOnly]);
 
     if (nodeViews.length > 0 && renderNodeViews == null) {
       throw new Error(
